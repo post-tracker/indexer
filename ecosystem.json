@@ -1,0 +1,13 @@
+{
+    "apps": [
+        {
+            "name": "indexer",
+            "script": "dist/indexer.js",
+            "env": {
+                "NODE_ENV": "production"
+            },
+            "cron_restart": "*/5 * * * *",
+            "autorestart": false
+        }
+    ]
+}

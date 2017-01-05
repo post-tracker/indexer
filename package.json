@@ -1,0 +1,37 @@
+{
+  "name": "indexer",
+  "version": "1.0.0",
+  "description": "",
+  "main": "dist/indexer.js",
+  "scripts": {
+      "test": "echo \"Error: no test specified\" && exit 1",
+      "start": "node dist/indexer.js",
+      "build": "babel src -d dist && node dist/setup.js",
+      "watch": "babel --watch src -d dist"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://kokarn@github.com/post-tracker/indexer.git"
+  },
+  "author": "Kokarn",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/post-tracker/indexer/issues"
+  },
+  "homepage": "https://github.com/post-tracker/indexer#readme",
+  "dependencies": {
+    "html-entities": "^1.2.0",
+    "request": "^2.79.0",
+    "request-promise": "^4.1.1",
+    "sqlite3": "^3.1.8"
+  },
+  "devDependencies": {
+    "babel-cli": "^6.9.0",
+    "babel-plugin-transform-async-to-generator": "^6.8.0"
+  },
+  "babel": {
+    "plugins": [
+      "transform-async-to-generator"
+    ]
+  }
+}
