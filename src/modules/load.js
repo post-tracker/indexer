@@ -3,7 +3,7 @@ const got = require( 'got' );
 const cache = require( './cache.js' );
 
 class Load {
-    async loadFromUrl( url ) {
+    async loadFromUrl ( url ) {
         const response = await got( url );
 
         await cache.store( url, response.body );
@@ -11,25 +11,25 @@ class Load {
         return response.body;
     }
 
-    async loadFromCache( url ){
+    async loadFromCache ( url ) {
         return await cache.get( url );
     }
 
-    async get( url ) {
+    async get ( url ) {
         let source = 'cache';
 
-        let data = await this.loadFromCache( url );
+        let urlJSONData = await this.loadFromCache( url );
 
-        if( !data ){
+        if ( !urlJSONData ) {
             // console.log( `Couldn't find ${ url } in cache, loading from web` );
             source = 'web';
-            data = await this.loadFromUrl( url );
+            urlJSONData = await this.loadFromUrl( url );
         }
 
         try {
-            return JSON.parse( data );
-        } catch( parseError ){
-            console.log( `Failed to parse ${ url } from ${ source }. `);
+            return JSON.parse( urlJSONData );
+        } catch ( parseError ) {
+            console.log( `Failed to parse ${ url } from ${ source }.` );
             await cache.cleanIndex( url );
 
             return false;
