@@ -1,4 +1,4 @@
-const request = require( 'request-promise' );
+const got = require( 'got' );
 const { XmlEntities, AllHtmlEntities } = require( 'html-entities' );
 
 const Post = require( './Post.js' );
@@ -110,18 +110,9 @@ class Reddit {
     }
 
     async getRedirectUrl( url ){
-        const options = {
-            uri: url,
-            headers: {
-                'User-Agent': 'Request-Promise'
-            },
-            simple: false,
-            resolveWithFullResponse: true
-        };
+        const response = await got( url );
 
-        const response = await request.get( options );
-
-        return response.request.uri.href;
+        return response.url;
     }
 
     async loadRecentPosts(){

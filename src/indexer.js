@@ -1,6 +1,5 @@
 const fs = require( 'fs' );
 
-const request = require( 'request' );
 const sqlite3 = require( 'sqlite3' );
 
 const Reddit = require( './modules/Reddit.js' );

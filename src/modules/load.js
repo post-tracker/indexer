@@ -1,25 +1,10 @@
-const request = require( 'request-promise' );
+const got = require( 'got' );
 
 const cache = require( './cache.js' );
 
 class Load {
     async loadFromUrl( url ) {
-        const options = {
-            uri: url,
-            headers: {
-                'User-Agent': 'Request-Promise'
-            },
-            simple: false,
-            resolveWithFullResponse: true
-        };
-
-        const response = await request.get( options );
-
-        if( response.statusCode !== 200 ){
-            console.error( `${ url } returned ${ response.statusCode }` );
-
-            return false;
-        }
+        const response = await got( url );
 
         await cache.store( url, response.body );
 
