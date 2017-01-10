@@ -23,7 +23,13 @@ class Load {
         if ( !urlJSONData ) {
             // console.log( `Couldn't find ${ url } in cache, loading from web` );
             source = 'web';
-            urlJSONData = await this.loadFromUrl( url );
+            try {
+                urlJSONData = await this.loadFromUrl( url );
+            } catch ( urlLoadError ) {
+                console.log( `${ url } returned ${ urlLoadError.statusCode }` );
+
+                return false;
+            }
         }
 
         try {
