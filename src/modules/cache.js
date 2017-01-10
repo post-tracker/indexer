@@ -74,7 +74,7 @@ class Cache {
         return new Promise( ( resolve, reject ) => {
             fs.unlink( path.join( this.cachePath, this.normalizeName( index ) ), ( unlinkError ) => {
                 if ( unlinkError ) {
-                    if( unlinkError.code === 'ENOENT' ){
+                    if ( unlinkError.code === 'ENOENT' ) {
                         reject( new Error( `${ index } has already been cleared.` ) );
                     } else {
                         reject( unlinkError );
@@ -126,7 +126,7 @@ class Cache {
                                 throw unlinkError;
                             }
 
-                            //console.log( `${ files[ i ] } was older than ${ CACHE_TTL } ms and has been cleared` );
+                            // console.log( `${ files[ i ] } was older than ${ CACHE_TTL } ms and has been cleared` );
                         } );
                     }
                 } );
