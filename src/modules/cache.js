@@ -126,7 +126,7 @@ class Cache {
                                 throw unlinkError;
                             }
 
-                            console.log( `${ files[ i ] } was older than ${ CACHE_TTL } ms and has been cleared` );
+                            //console.log( `${ files[ i ] } was older than ${ CACHE_TTL } ms and has been cleared` );
                         } );
                     }
                 } );
