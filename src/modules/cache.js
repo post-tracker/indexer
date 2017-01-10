@@ -74,7 +74,11 @@ class Cache {
         return new Promise( ( resolve, reject ) => {
             fs.unlink( path.join( this.cachePath, this.normalizeName( index ) ), ( unlinkError ) => {
                 if ( unlinkError ) {
-                    reject( unlinkError );
+                    if( unlinkError.code === 'ENOENT' ){
+                        reject( new Error( `${ index } has already been cleared.` ) );
+                    } else {
+                        reject( unlinkError );
+                    }
 
                     return false;
                 }
