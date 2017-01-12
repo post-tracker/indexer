@@ -4,7 +4,15 @@ const cache = require( './cache.js' );
 
 class Load {
     async loadFromUrl ( url ) {
-        const response = await got( url );
+        let response = false;
+
+        try {
+            response = await got( url );
+        } catch ( urlLoadError ) {
+            console.log( `${ url } returned ${ urlLoadError.statusCode }` );
+
+            return false;
+        }
 
         await cache.store( url, response.body );
 
@@ -23,13 +31,13 @@ class Load {
         if ( !urlJSONData ) {
             // console.log( `Couldn't find ${ url } in cache, loading from web` );
             source = 'web';
-            try {
-                urlJSONData = await this.loadFromUrl( url );
-            } catch ( urlLoadError ) {
-                console.log( `${ url } returned ${ urlLoadError.statusCode }` );
 
-                return false;
-            }
+            urlJSONData = await this.loadFromUrl( url );
+        }
+
+        // Early return if we don't have data because false is valid JSON
+        if ( urlJSONData === false ) {
+            return false;
         }
 
         try {

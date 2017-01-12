@@ -112,7 +112,15 @@ class Reddit {
     }
 
     async getRedirectUrl ( url ) {
-        const response = await got( url );
+        let response;
+
+        try {
+            response = await got( url );
+        } catch ( urlLoadError ) {
+            console.log( `${ url } could not be resolved as a real url. It returned a ${ urlLoadError.statusCode }` );
+
+            return false;
+        }
 
         return response.url;
     }
@@ -141,7 +149,13 @@ class Reddit {
                     };
 
                     if ( currentPost.data.link_url.indexOf( 'www.reddit.com' ) === -1 ) {
-                        post.topic.url = await this.getRedirectUrl( `${ this.apiBase }/comments/${ this.parseId( currentPost.data.link_id ) }/` );
+                        const redirectUrl = await this.getRedirectUrl( `${ this.apiBase }/comments/${ this.parseId( currentPost.data.link_id ) }/` );
+
+                        if ( redirectUrl ) {
+                            post.topic.url = redirectUrl;
+                        } else {
+                            continue;
+                        }
                     }
 
                     post.url = `${ post.topic.url }${ currentPost.data.id }/`;
@@ -151,7 +165,7 @@ class Reddit {
                     if ( parentPost === false ) {
                         continue;
                     }
-                    
+
                     post.text = parentPost + this.decodeHtml( currentPost.data.body_html );
 
                     post.text = post.text.replace( /href="\/(.+?)\//gim, 'href="https://reddit.com/$1/' );
