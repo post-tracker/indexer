@@ -80,14 +80,14 @@ class Reddit {
         return false;
     }
 
-    async getParentPost ( topicID, commentID ) {
+    async getParentPostHTML ( topicID, commentID ) {
         const topicData = await this.getTopic( topicID );
         const commentData = this.findCommentInTopic( topicData, commentID );
 
         if ( !commentData ) {
             // throw new Error( `Unable to find post with id ${ commentID } in ${ topicID }` );
 
-            return '';
+            return false;
         }
 
         const text = commentData.data.body_html || commentData.data.selftext_html;
@@ -146,7 +146,12 @@ class Reddit {
 
                     post.url = `${ post.topic.url }${ currentPost.data.id }/`;
 
-                    parentPost = await this.getParentPost( currentPost.data.link_id, currentPost.data.parent_id );
+                    parentPost = await this.getParentPostHTML( currentPost.data.link_id, currentPost.data.parent_id );
+
+                    if ( parentPost === false ) {
+                        continue;
+                    }
+                    
                     post.text = parentPost + this.decodeHtml( currentPost.data.body_html );
 
                     post.text = post.text.replace( /href="\/(.+?)\//gim, 'href="https://reddit.com/$1/' );
