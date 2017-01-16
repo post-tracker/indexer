@@ -56,6 +56,8 @@ class Post {
     async save ( databasePath, filterData ) {
         return new Promise( ( resolve, reject ) => {
             if ( !this.isValid( filterData ) ) {
+                resolve();
+
                 return false;
             }
 
