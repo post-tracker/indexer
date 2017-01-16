@@ -8,40 +8,22 @@ class Post {
 
         // Filter for specific forums if we want
         if ( filterData && filterData.matchOnly ) {
-            let invalid = true;
-
             if ( !Array.isArray( filterData.matchOnly ) ) {
                 filterData.matchOnly = [ filterData.matchOnly ];
             }
 
-            for ( let i = 0; i < filterData.matchOnly.length; i = i + 1 ) {
-                if ( filterData.matchOnly[ i ] === this.section ) {
-                    invalid = false;
-                    break;
-                }
-            }
-
-            if ( invalid ) {
+            if ( filterData.matchOnly.indexOf( this.section ) === -1 ) {
                 return false;
             }
         }
 
         // Filter for specific forums if we want
         if ( filterData && filterData.exclude ) {
-            let invalid = false;
-
             if ( !Array.isArray( filterData.exclude ) ) {
                 filterData.exclude = [ filterData.exclude ];
             }
 
-            for ( let i = 0; i < filterData.exclude.length; i = i + 1 ) {
-                if ( filterData.exclude[ i ] === this.section ) {
-                    invalid = true;
-                    break;
-                }
-            }
-
-            if ( invalid ) {
+            if ( filterData.exclude.indexOf( this.section ) > -1  ) {
                 return false;
             }
         }
