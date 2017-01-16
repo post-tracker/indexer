@@ -65,7 +65,7 @@ for ( let gameIndex = 0; gameIndex < games.length; gameIndex = gameIndex + 1 ) {
                 .then( ( ) => {
                     const filter = gameData.config.Reddit || false;
 
-                    storePosts( user.postList, databasePath, gameData.config, filter );
+                    storePosts( user.postList, databasePath, filter );
                 } )
                 .catch( ( loadPostsError ) => {
                     console.log( loadPostsError );
