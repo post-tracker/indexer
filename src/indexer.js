@@ -10,6 +10,7 @@ cache.clean();
 const games = [
     'ark',
     'battlefield1',
+    'conan',
     'csgo',
     'elite',
     'rainbow6',
