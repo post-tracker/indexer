@@ -23,31 +23,35 @@ class Load {
         return await cache.get( url );
     }
 
-    async get ( url ) {
+    async get ( url, type = 'json' ) {
         let source = 'cache';
 
-        let urlJSONData = await this.loadFromCache( url );
+        let urlData = await this.loadFromCache( url );
 
-        if ( !urlJSONData ) {
+        if ( !urlData ) {
             // console.log( `Couldn't find ${ url } in cache, loading from web` );
             source = 'web';
 
-            urlJSONData = await this.loadFromUrl( url );
+            urlData = await this.loadFromUrl( url );
         }
 
         // Early return if we don't have data because false is valid JSON
-        if ( urlJSONData === false ) {
+        if ( urlData === false ) {
             return false;
         }
 
-        try {
-            return JSON.parse( urlJSONData );
-        } catch ( parseError ) {
-            console.log( `Failed to parse ${ url } from ${ source }.` );
-            await cache.cleanIndex( url );
+        if ( type === 'json' ) {
+            try {
+                return JSON.parse( urlData );
+            } catch ( parseError ) {
+                console.log( `Failed to parse ${ url } from ${ source }.` );
+                await cache.cleanIndex( url );
 
-            return false;
+                return false;
+            }
         }
+
+        return urlData;
     }
 }
 
