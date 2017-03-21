@@ -69,7 +69,7 @@ class Load {
 
         if ( urlData.type === 'JSON' ) {
             try {
-                return JSON.parse( urlData );
+                return JSON.parse( urlData.dataset );
             } catch ( parseError ) {
                 console.log( `Failed to parse ${ url } from ${ source }.` );
                 await cache.cleanIndex( url );
