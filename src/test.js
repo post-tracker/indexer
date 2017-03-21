@@ -1,6 +1,7 @@
 const nano = require( 'nano' )( 'http://localhost:5984' );
 
 const indexers = require( './modules/indexers' );
+const isValidPost = require( './modules/isValidPost.js' );
 
 const postDatabase = nano.db.use( 'posts' );
 const peopleDatabase = nano.db.use( 'people' );
@@ -36,13 +37,15 @@ peopleDatabase.list( {
             const allGameData = Object.assign(
                 {},
                 {
-                    _id: gameData._id
+                    _id: gameData._id,
                 },
                 gameData.doc
             );
 
             for ( let i = 0; i < developers[ allGameData._id ].length; i = i + 1 ) {
-                for ( const service in developers[ allGameData._id ][ i ].accounts ) {
+                const { _id, _rev, ...userData } = developers[ allGameData._id ][ i ];
+
+                for ( const service in userData.accounts ) {
                     let providerName = service;
                     let provider;
 
@@ -51,19 +54,19 @@ peopleDatabase.list( {
                     }
 
                     try {
-                        provider = new indexers[ providerName ]( allGameData.config[ service ] || {} );
+                        provider = new indexers[ providerName ]( allGameData.config[ service ] || {}, userData );
                     } catch ( providerError ) {
-                        console.error( `No indexer for ${ providerName } is built yet.` );
+                        console.error( `No indexer for ${ providerName } built yet, skipping` );
 
                         continue;
                     }
 
                     provider.loadRecentPosts()
                         .then( ( posts ) => {
-                            console.log( posts );
-                            // for ( let i = 0; i < posts.length; i = i + 1 ) {
-                            //     database.insert( posts[ i ], posts[ i ].url );
-                            // }
+                            for ( let i = 0; i < posts.length; i = i + 1 ) {
+                                console.log( isValidPost( posts[ i ], allGameData.config[ service ] ) );
+                                //database.insert( posts[ i ], posts[ i ].url );
+                            }
                         } )
                         .catch( ( error ) => {
                             console.log( error );
@@ -73,51 +76,6 @@ peopleDatabase.list( {
         } );
     } );
 } );
-
-// const forumposts = new IPB( 'http://forums.playbattlegrounds.com', {
-//     accounts: {
-//         IPB: '9-pubg_fwg',
-//     },
-//     nick: 'FWG',
-// } );
-//
-// forumposts.loadRecentPosts()
-//     .then( ( posts ) => {
-//         console.log( posts );
-//     } )
-//     .catch( ( error ) => {
-//         console.log( error );
-//     } );
-
-// const steamPosts = new Steam( {
-//     accounts: {
-//         Steam: '76561197970743075',
-//     },
-//     nick: 'Tamtor',
-// } );
-//
-// steamPosts.loadRecentPosts()
-//     .then( ( posts ) => {
-//         console.log( posts );
-//     } )
-//     .catch( ( error ) => {
-//         console.log( error );
-//     } );
-
-// const simpleMachinesForumPosts = new SimpleMachinesForum( 'https://ludeon.com/forums/', {
-//     accounts: {
-//         SimpleMachinesForum: '1',
-//     },
-//     nick: 'Tynan',
-// } );
-//
-// simpleMachinesForumPosts.loadRecentPosts()
-//     .then( ( posts ) => {
-//         console.log( posts );
-//     } )
-//     .catch( ( error ) => {
-//         console.log( error );
-//     } );
 
 // const miggyRSSParser = new MiggyRSS( 'https://miggy.org/games/elite-dangerous/devtracker/ed-dev-posts.rss' );
 //
