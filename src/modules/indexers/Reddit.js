@@ -4,20 +4,20 @@ const {
     XmlEntities,
 } = require( 'html-entities' );
 
-const Post = require( '../Post.js' );
 const load = require( '../load.js' );
 
 const xmlEntities = new XmlEntities();
 const htmlEntities = new AllHtmlEntities();
 
 class Reddit {
-    constructor ( uid, identifier ) {
+    constructor ( providerConfig, user ) {
         this.apiBase = 'https://www.reddit.com';
         this.userPostsUrl = '/user/{username}.json';
         this.singleCommentUrl = '/comments/{topicID}.json';
 
-        this.uid = uid;
-        this.identifier = identifier;
+        this.identifier = 'Reddit';
+
+        this.user = user;
 
         this.postList = [];
     }
@@ -126,7 +126,7 @@ class Reddit {
     }
 
     async loadRecentPosts () {
-        const url = this.apiBase + this.userPostsUrl.replace( '{username}', this.identifier );
+        const url = this.apiBase + this.userPostsUrl.replace( '{username}', this.user.accounts[ this.identifier ] );
         const posts = await load.get( url );
 
         if ( !posts || !posts.data.children ) {
@@ -137,28 +137,26 @@ class Reddit {
 
         for ( let postIndex = 0; postIndex < posts.data.children.length; postIndex = postIndex + 1 ) {
             const currentPost = posts.data.children[ postIndex ];
-            const post = new Post();
+            const postData = {};
             let parentPost = '';
 
             switch ( currentPost.kind ) {
                 case 't1':
                     // Posted a reply (probably)
-                    post.topic = {
-                        title: currentPost.data.link_title,
-                        url: currentPost.data.link_url,
-                    };
+                    postData.topic = currentPost.data.link_title;
+                    postData.topicUrl = currentPost.data.link_url;
 
                     if ( currentPost.data.link_url.indexOf( 'www.reddit.com' ) === -1 ) {
                         const redirectUrl = await this.getRedirectUrl( `${ this.apiBase }/comments/${ this.parseId( currentPost.data.link_id ) }/` );
 
                         if ( redirectUrl ) {
-                            post.topic.url = redirectUrl;
+                            postData.topicUrl = redirectUrl;
                         } else {
                             continue;
                         }
                     }
 
-                    post.url = `${ post.topic.url }${ currentPost.data.id }/`;
+                    postData.url = `${ postData.topic.url }${ currentPost.data.id }/`;
 
                     parentPost = await this.getParentPostHTML( currentPost.data.link_id, currentPost.data.parent_id );
 
@@ -166,25 +164,23 @@ class Reddit {
                         continue;
                     }
 
-                    post.text = parentPost + this.decodeHtml( currentPost.data.body_html );
+                    postData.content = parentPost + this.decodeHtml( currentPost.data.body_html );
 
-                    post.text = post.text.replace( /href="\/(.+?)\//gim, 'href="https://reddit.com/$1/' );
+                    postData.content = postData.content.replace( /href="\/(.+?)\//gim, 'href="https://reddit.com/$1/' );
 
                     break;
                 case 't3':
                     // Posted a topic (probably)
-                    post.topic = {
-                        title: currentPost.data.title,
-                        url: currentPost.data.url,
-                    };
+                    postData.topic = currentPost.data.title;
+                    postData.topicUrl = currentPost.data.url;
 
                     if ( !currentPost.data.selftext_html ) {
                         // User posted a link to somewhere
                         continue;
                     }
 
-                    post.text = this.decodeHtml( currentPost.data.selftext_html );
-                    post.url = currentPost.data.url;
+                    postData.content = this.decodeHtml( currentPost.data.selftext_html );
+                    postData.url = currentPost.data.url;
 
                     break;
                 default:
@@ -192,15 +188,17 @@ class Reddit {
                     break;
             }
 
-            post.section = currentPost.data.subreddit;
-            post.timestamp = currentPost.data.created_utc;
-            post.uid = this.uid;
-            post.source = 'Reddit';
+            postData.section = currentPost.data.subreddit;
+            postData.timestamp = currentPost.data.created_utc;
 
-            this.postList.push( post );
+            this.postList.push( Object.assign(
+                {},
+                this.user,
+                postData
+            ) );
         }
 
-        return true;
+        return this.postList;
     }
 }
 

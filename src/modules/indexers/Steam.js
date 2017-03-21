@@ -1,11 +1,10 @@
 const cheerio = require( 'cheerio' );
 const moment = require( 'moment' );
 
-// const Post = require( './Post.js' );
 const load = require( '../load.js' );
 
 class Steam {
-    constructor ( user ) {
+    constructor ( providerConfig, user ) {
         this.apiBase = 'http://steamcommunity.com';
         this.identifier = 'Steam';
 
@@ -28,8 +27,6 @@ class Steam {
         $( 'div.post_searchresult' ).each( ( index, element ) => {
             const postData = {};
             const $post = $( element );
-
-            console.log( 'post' );
 
             const forumLink = $post.find( 'a.searchresult_forum_link' ).attr( 'href' );
 
@@ -77,8 +74,6 @@ class Steam {
             } else {
                 postData.section = sectionUrlMatches[ 1 ];
             }
-
-            console.log( postData );
 
             posts.push( Object.assign(
                 {},

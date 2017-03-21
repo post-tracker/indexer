@@ -1,6 +1,5 @@
 const cheerio = require( 'cheerio' );
 
-// const Post = require( './Post.js' );
 const load = require( '../load.js' );
 
 const MILLISECONDS_PER_SECOND = 1000;

@@ -1,7 +1,6 @@
 const FeedMe = require( 'feedme' );
 const moment = require( 'moment' );
 
-// const Post = require( './Post.js' );
 const load = require( '../load.js' );
 
 class RSS {

@@ -1,12 +1,11 @@
 const cheerio = require( 'cheerio' );
 const moment = require( 'moment' );
 
-// const Post = require( './Post.js' );
 const load = require( '../load.js' );
 
 class SimpleMachinesForum {
-    constructor ( forumBase, user ) {
-        this.forumBase = forumBase;
+    constructor ( providerConfig, user ) {
+        this.forumBase = providerConfig.endpoint;
         this.profileBase = 'index.php?action=profile;area=showposts;u=';
         this.identifier = 'SimpleMachinesForum';
 
