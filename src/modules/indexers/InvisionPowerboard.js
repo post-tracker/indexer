@@ -5,18 +5,19 @@ const load = require( '../load.js' );
 const MILLISECONDS_PER_SECOND = 1000;
 
 class InvisionPowerboard {
-    constructor ( forumBase, user ) {
+    constructor ( forumBase, userData, userIdentifier ) {
         this.forumBase = forumBase;
         this.profileBase = '/profile/';
         this.identifier = 'InvisionPowerboard';
 
-        this.user = user;
+        this.user = userData;
+        this.userIdentifier = userIdentifier;
 
         this.postList = [];
     }
 
     async loadRecentPosts () {
-        const page = await load.get( `${ this.forumBase }${ this.profileBase }${ this.user.accounts[ this.identifier ] }` );
+        const page = await load.get( `${ this.forumBase }${ this.profileBase }${ this.userIdentifier }` );
         const $ = cheerio.load( page );
         const posts = [];
 

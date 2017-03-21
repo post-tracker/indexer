@@ -10,14 +10,15 @@ const xmlEntities = new XmlEntities();
 const htmlEntities = new AllHtmlEntities();
 
 class Reddit {
-    constructor ( providerConfig, user ) {
+    constructor ( providerConfig, userData, userIdentifier ) {
         this.apiBase = 'https://www.reddit.com';
         this.userPostsUrl = '/user/{username}.json';
         this.singleCommentUrl = '/comments/{topicID}.json';
 
         this.identifier = 'Reddit';
 
-        this.user = user;
+        this.user = userData;
+        this.userIdentifier = userIdentifier;
 
         this.postList = [];
     }
@@ -126,7 +127,7 @@ class Reddit {
     }
 
     async loadRecentPosts () {
-        const url = this.apiBase + this.userPostsUrl.replace( '{username}', this.user.accounts[ this.identifier ] );
+        const url = this.apiBase + this.userPostsUrl.replace( '{username}', this.userIdentifier );
         const posts = await load.get( url );
 
         if ( !posts || !posts.data.children ) {
@@ -156,7 +157,7 @@ class Reddit {
                         }
                     }
 
-                    postData.url = `${ postData.topic.url }${ currentPost.data.id }/`;
+                    postData.url = `${ postData.topicUrl }${ currentPost.data.id }/`;
 
                     parentPost = await this.getParentPostHTML( currentPost.data.link_id, currentPost.data.parent_id );
 

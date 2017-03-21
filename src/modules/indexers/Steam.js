@@ -4,20 +4,21 @@ const moment = require( 'moment' );
 const load = require( '../load.js' );
 
 class Steam {
-    constructor ( providerConfig, user ) {
+    constructor ( providerConfig, userData, userIdentifier ) {
         this.apiBase = 'http://steamcommunity.com';
         this.identifier = 'Steam';
 
-        this.user = user;
+        this.user = userData;
+        this.userIdentifier = userIdentifier;
 
         this.postList = [];
     }
 
     async loadRecentPosts () {
-        let url = `${ this.apiBase }/id/${ this.user.accounts[ this.identifier ] }/posthistory/`;
+        let url = `${ this.apiBase }/id/${ this.userIdentifier }/posthistory/`;
 
-        if ( !isNaN( this.user.accounts[ this.identifier ] ) ) {
-            url = `${ this.apiBase }/profiles/${ this.user.accounts[ this.identifier ] }/posthistory/`;
+        if ( !isNaN( this.userIdentifier ) ) {
+            url = `${ this.apiBase }/profiles/${ this.userIdentifier }/posthistory/`;
         }
 
         const postsHTML = await load.get( url );
