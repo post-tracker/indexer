@@ -4,8 +4,8 @@ const moment = require( 'moment' );
 const load = require( '../load.js' );
 
 class RSS {
-    constructor ( path ) {
-        this.path = path;
+    constructor ( providerConfig ) {
+        this.path = providerConfig.endpoint;
 
         this.postList = [];
     }
