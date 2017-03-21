@@ -9,7 +9,7 @@ class InvisionPowerboard {
     constructor ( forumBase, user ) {
         this.forumBase = forumBase;
         this.profileBase = '/profile/';
-        this.identifier = 'IPB';
+        this.identifier = 'InvisionPowerboard';
 
         this.user = user;
 
@@ -35,7 +35,7 @@ class InvisionPowerboard {
                         .find( '.ipsType_richText > div' )
                         .html()
                         .trim(),
-                    source: 'InvisionPowerboard',
+                    source: this.identifier,
                     timestamp: Date.parse( $element
                             .find( 'time' )
                             .attr( 'datetime' )
