@@ -25,8 +25,11 @@
   "homepage": "https://github.com/post-tracker/indexer#readme",
   "dependencies": {
     "cheerio": "^0.22.0",
+    "feedme": "^1.0.0",
     "got": "^6.7.1",
     "html-entities": "^1.2.0",
+    "is-json": "^2.0.1",
+    "moment": "^2.18.0",
     "nano": "^6.2.0",
     "sqlite3": "^3.1.8"
   },

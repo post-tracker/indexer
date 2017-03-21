@@ -4,8 +4,8 @@ const {
     XmlEntities,
 } = require( 'html-entities' );
 
-const Post = require( './Post.js' );
-const load = require( './load.js' );
+const Post = require( '../Post.js' );
+const load = require( '../load.js' );
 
 const xmlEntities = new XmlEntities();
 const htmlEntities = new AllHtmlEntities();
