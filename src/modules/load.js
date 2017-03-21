@@ -1,13 +1,19 @@
 const got = require( 'got' );
+const isJSON = require( 'is-json' );
 
 const cache = require( './cache.js' );
 
 class Load {
     async loadFromUrl ( url ) {
         let response = false;
+        let type = 'HTML';
 
         try {
-            response = await got( url );
+            response = await got( url,
+                {
+                    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/56.0.2924.87 Safari/537.36',
+                }
+            );
         } catch ( urlLoadError ) {
             console.log( `${ url } returned ${ urlLoadError.statusCode }` );
 
@@ -16,14 +22,35 @@ class Load {
 
         await cache.store( url, response.body );
 
-        return response.body;
+        if ( isJSON( response.body ) ) {
+            type = 'JSON';
+        }
+
+        return {
+            dataset: response.body,
+            type: type,
+        };
     }
 
     async loadFromCache ( url ) {
-        return await cache.get( url );
+        const cacheData = await cache.get( url );
+        let type = 'HTML';
+
+        if ( cacheData === false ) {
+            return false;
+        }
+
+        if ( isJSON( cacheData ) ) {
+            type = 'JSON';
+        }
+
+        return {
+            dataset: cacheData,
+            type: type,
+        };
     }
 
-    async get ( url, type = 'json' ) {
+    async get ( url ) {
         let source = 'cache';
 
         let urlData = await this.loadFromCache( url );
@@ -40,7 +67,7 @@ class Load {
             return false;
         }
 
-        if ( type === 'json' ) {
+        if ( urlData.type === 'JSON' ) {
             try {
                 return JSON.parse( urlData );
             } catch ( parseError ) {
@@ -51,7 +78,7 @@ class Load {
             }
         }
 
-        return urlData;
+        return urlData.dataset;
     }
 }
 

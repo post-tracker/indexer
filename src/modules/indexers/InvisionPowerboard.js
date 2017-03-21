@@ -1,22 +1,23 @@
 const cheerio = require( 'cheerio' );
 
 // const Post = require( './Post.js' );
-const load = require( './load.js' );
+const load = require( '../load.js' );
 
 const MILLISECONDS_PER_SECOND = 1000;
 
 class InvisionPowerboard {
-    constructor ( user, identifier ) {
-        this.apiBase = 'http://forums.playbattlegrounds.com/profile/';
+    constructor ( forumBase, user ) {
+        this.forumBase = forumBase;
+        this.profileBase = '/profile/';
+        this.identifier = 'IPB';
 
         this.user = user;
-        this.identifier = identifier;
 
         this.postList = [];
     }
 
     async loadRecentPosts () {
-        const page = await load.get( `${ this.apiBase }${ this.identifier }`, 'html' );
+        const page = await load.get( `${ this.forumBase }${ this.profileBase }${ this.user.accounts[ this.identifier ] }` );
         const $ = cheerio.load( page );
         const posts = [];
 
