@@ -1,78 +1,97 @@
-const fs = require( 'fs' );
+const nano = require( 'nano' )( 'http://localhost:5984' );
 
-const sqlite3 = require( 'sqlite3' );
+const indexers = require( './modules/indexers' );
+const isValidPost = require( './modules/isValidPost.js' );
 
-const Reddit = require( './modules/Reddit.js' );
-const cache = require( './modules/cache.js' );
+const postDatabase = nano.db.use( 'posts' );
+const peopleDatabase = nano.db.use( 'people' );
+const gameDatabase = nano.db.use( 'games' );
 
-cache.clean();
-
-const games = [
-    'ark',
-    'battlefield1',
-    'conan',
-    'csgo',
-    'elite',
-    'rainbow6',
-    'rimworld',
-];
-
-console.log( `Indexer starting for ${ games.join( ',' ) }` );
-console.time( 'Indexer' );
-
-process.on( 'exit', () => {
-    console.timeEnd( 'Indexer' );
-} );
-
-const storePosts = async function storePosts ( posts, databasePath, filterData ) {
-    for ( let i = 0; i < posts.length; i = i + 1 ) {
-        await posts[ i ].save( databasePath, filterData )
-            .catch( ( error ) => {
-                console.log( error );
-            } );
+peopleDatabase.list( {
+    // eslint-disable-next-line camelcase
+    include_docs: true,
+    limit: 1000,
+}, ( peopleDatabaseError, peopleDatabaseData ) => {
+    if ( peopleDatabaseError ) {
+        throw peopleDatabaseError;
     }
-};
 
-for ( let gameIndex = 0; gameIndex < games.length; gameIndex = gameIndex + 1 ) {
-    const databasePath = `../dev-tracker/dist/${ games[ gameIndex ] }/data/database.sqlite`;
-    const dataPath = `../dev-tracker/games/${ games[ gameIndex ] }/data.json`;
-    const database = new sqlite3.Database( databasePath );
+    const developers = {};
 
-    // eslint-disable-next-line no-sync
-    const gameData = JSON.parse( fs.readFileSync( dataPath, 'utf-8' ) );
-
-    database.all( `SELECT
-            developers.id,
-            accounts.uid,
-            accounts.identifier,
-            developers.active
-        FROM
-            developers,
-            accounts
-        WHERE
-            developers.active = 1
-        AND
-            developers.id = accounts.uid
-        AND
-            accounts.service = 'Reddit'`, ( error, developers ) => {
-        if ( error ) {
-            throw error;
+    peopleDatabaseData.rows.forEach( ( document ) => {
+        if ( !developers[ document.doc.game ] ) {
+            developers[ document.doc.game ] = [];
         }
 
-        for ( let i = 0; i < developers.length; i = i + 1 ) {
-            const user = new Reddit( developers[ i ].uid, developers[ i ].identifier );
-
-            user.loadRecentPosts()
-                .then( ( ) => {
-                    const filter = gameData.config.Reddit || false;
-
-                    storePosts( user.postList, databasePath, filter );
-                } )
-                .catch( ( loadPostsError ) => {
-                    console.log( loadPostsError );
-                } );
-        }
+        developers[ document.doc.game ].push( document.doc );
     } );
 
-    database.close();
-}
+    gameDatabase.list( {
+        // eslint-disable-next-line camelcase
+        include_docs: true,
+    }, ( gameDatabaseError, gameDatabaseData ) => {
+        if ( gameDatabaseError ) {
+            throw gameDatabaseError;
+        }
+
+        gameDatabaseData.rows.forEach( ( gameData ) => {
+            const allGameData = Object.assign(
+                {},
+                {
+                    _id: gameData._id,
+                },
+                gameData.doc
+            );
+
+            if ( !developers[ allGameData._id ] ) {
+                // If we haven't added any developers, there is nothing to index
+
+                return true;
+            }
+
+            for ( let i = 0; i < developers[ allGameData._id ].length; i = i + 1 ) {
+                const { _id, _rev, accounts, ...userData } = developers[ allGameData._id ][ i ];
+
+                for ( const service in accounts ) {
+                    let providerName = service;
+                    let provider;
+
+                    if ( allGameData.config[ service ] && allGameData.config[ service ].type ) {
+                        providerName = allGameData.config[ service ].type;
+                    }
+
+                    try {
+                        provider = new indexers[ providerName ]( allGameData.config[ service ] || {}, userData );
+                    } catch ( providerError ) {
+                        console.error( `No indexer for ${ providerName } built yet, skipping` );
+
+                        continue;
+                    }
+
+                    provider.loadRecentPosts()
+                        .then( ( posts ) => {
+                            const validPosts = [];
+                            for ( let i = 0; i < posts.length; i = i + 1 ) {
+                                if ( !isValidPost( posts[ i ], allGameData.config[ service ] ) ) {
+                                    continue;
+                                }
+
+                                posts[ i ]._id = posts[ i ].url;
+
+                                validPosts.push( posts[ i ] );
+                            }
+
+                            postDatabase.bulk( { docs: validPosts }, ( error ) => {
+                                if ( error ) {
+                                    throw error;
+                                }
+                            } );
+                        } )
+                        .catch( ( error ) => {
+                            console.log( error );
+                        } );
+                }
+            }
+        } );
+    } );
+} );
