@@ -71,7 +71,7 @@ peopleDatabase.list( {
                     }
 
                     try {
-                        provider = new indexers[ providerName ]( allGameData.config[ service ] || {}, userData );
+                        provider = new indexers[ providerName ]( allGameData.config[ service ] || {}, userData, accounts[ service ] );
                     } catch ( providerError ) {
                         console.error( `No indexer for ${ providerName } built yet, skipping` );
 
