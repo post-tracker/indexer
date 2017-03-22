@@ -43,6 +43,7 @@ peopleDatabase.list( {
                 gameData.doc
             );
 
+
             if ( !developers[ allGameData._id ] ) {
                 // If we haven't added any developers, there is nothing to index
 
@@ -58,6 +59,10 @@ peopleDatabase.list( {
                 } = developers[ allGameData._id ][ i ];
 
                 for ( const service in accounts ) {
+                    if ( !Reflect.apply( {}.hasOwnProperty, accounts, [ service ] ) ) {
+                        continue;
+                    }
+
                     let providerName = service;
                     let provider;
 

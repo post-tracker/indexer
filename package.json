@@ -64,6 +64,12 @@
       ],
       "prefer-destructuring": [
         "off"
+      ],
+      "no-unused-vars": [
+        "error",
+        {
+          "ignoreRestSiblings": true
+        }
       ]
     }
   }
