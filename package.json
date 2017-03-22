@@ -48,6 +48,11 @@
   },
   "eslintConfig": {
     "extends": "kokarn/nodejs",
+    "parserOptions": {
+        "ecmaFeatures": {
+          "experimentalObjectRestSpread": true
+        }
+    },
     "rules": {
       "node/no-unsupported-features": [
         "error",
