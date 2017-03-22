@@ -50,7 +50,12 @@ peopleDatabase.list( {
             }
 
             for ( let i = 0; i < developers[ allGameData._id ].length; i = i + 1 ) {
-                const { _id, _rev, accounts, ...userData } = developers[ allGameData._id ][ i ];
+                const {
+                    _id,
+                    _rev,
+                    accounts,
+                    ...userData
+                } = developers[ allGameData._id ][ i ];
 
                 for ( const service in accounts ) {
                     let providerName = service;
@@ -71,17 +76,20 @@ peopleDatabase.list( {
                     provider.loadRecentPosts()
                         .then( ( posts ) => {
                             const validPosts = [];
-                            for ( let i = 0; i < posts.length; i = i + 1 ) {
-                                if ( !isValidPost( posts[ i ], allGameData.config[ service ] ) ) {
+
+                            for ( let postIndex = 0; postIndex < posts.length; postIndex = postIndex + 1 ) {
+                                if ( !isValidPost( posts[ postIndex ], allGameData.config[ service ] ) ) {
                                     continue;
                                 }
 
-                                posts[ i ]._id = posts[ i ].url;
+                                posts[ postIndex ]._id = posts[ postIndex ].url;
 
-                                validPosts.push( posts[ i ] );
+                                validPosts.push( posts[ postIndex ] );
                             }
 
-                            postDatabase.bulk( { docs: validPosts }, ( error ) => {
+                            postDatabase.bulk( {
+                                docs: validPosts,
+                            }, ( error ) => {
                                 if ( error ) {
                                     throw error;
                                 }
@@ -92,6 +100,8 @@ peopleDatabase.list( {
                         } );
                 }
             }
+
+            return true;
         } );
     } );
 } );
