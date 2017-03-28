@@ -3,6 +3,10 @@ const isValidPost = function isValidPost ( postData, filterData ) {
         return false;
     }
 
+    if ( !postData.timestamp || String( postData.timestamp ).length !== 10 ) {
+        return false;
+    }
+
     // Filter for specific forums if we want
     if ( filterData && filterData.matchOnly ) {
         if ( !Array.isArray( filterData.matchOnly ) ) {
