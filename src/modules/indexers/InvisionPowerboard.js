@@ -5,9 +5,9 @@ const load = require( '../load.js' );
 const MILLISECONDS_PER_SECOND = 1000;
 
 class InvisionPowerboard {
-    constructor ( forumBase, userData, userIdentifier ) {
-        this.forumBase = forumBase;
-        this.profileBase = '/profile/';
+    constructor ( providerConfig, userData, userIdentifier ) {
+        this.forumBase = providerConfig.endpoint;
+        this.profileBase = '/profile/{{userId}}/?do=content&type=forums_topic_post&change_section=1';
         this.identifier = 'InvisionPowerboard';
 
         this.user = userData;
@@ -17,14 +17,17 @@ class InvisionPowerboard {
     }
 
     async loadRecentPosts () {
-        const page = await load.get( `${ this.forumBase }${ this.profileBase }${ this.userIdentifier }` );
+        const url = `${ this.forumBase }${ this.profileBase.replace( '{{userId}}', this.userIdentifier ) }`;
+        const page = await load.get( url );
         const $ = cheerio.load( page );
         const posts = [];
 
-        $( '#elProfileActivityOverview li.ipsStreamItem_contentBlock' ).each( ( index, element ) => {
+        $( 'div.ipsComment_content' ).each( ( index, element ) => {
             const $element = $( element );
             const fullUrl = $element
-                .find( 'h2 a' )
+                .find( 'h3' )
+                .first()
+                .find( 'a' )
                 .attr( 'href' );
 
             const post = Object.assign(
@@ -32,7 +35,7 @@ class InvisionPowerboard {
                 this.user,
                 {
                     content: $element
-                        .find( '.ipsType_richText > div' )
+                        .find( '.ipsType_richText' )
                         .html()
                         .trim(),
                     source: this.identifier,
@@ -41,7 +44,8 @@ class InvisionPowerboard {
                             .attr( 'datetime' )
                         ) / MILLISECONDS_PER_SECOND,
                     topic: $element
-                        .find( 'h2' )
+                        .find( 'h3' )
+                        .first()
                         .text()
                         .trim(),
                     topicUrl: fullUrl
