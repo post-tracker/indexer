@@ -7,6 +7,10 @@ const postDatabase = nano.db.use( 'posts' );
 const peopleDatabase = nano.db.use( 'people' );
 const gameDatabase = nano.db.use( 'games' );
 
+const normalizeString = function normalizeString ( unFixedString ) {
+    return unFixedString.replace( /[^a-zA-Z0-9\-+]/gim, '' );
+};
+
 peopleDatabase.list( {
     // eslint-disable-next-line camelcase
     include_docs: true,
@@ -87,7 +91,7 @@ peopleDatabase.list( {
                                     continue;
                                 }
 
-                                posts[ postIndex ]._id = posts[ postIndex ].url;
+                                posts[ postIndex ]._id = normalizeString( posts[ postIndex ].url );
 
                                 validPosts.push( posts[ postIndex ] );
                             }
