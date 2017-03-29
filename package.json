@@ -26,7 +26,9 @@
   "dependencies": {
     "got": "^6.7.1",
     "html-entities": "^1.2.0",
-    "sqlite3": "^3.1.8"
+    "moment": "^2.18.1",
+    "sqlite3": "^3.1.8",
+    "twitter": "^1.7.0"
   },
   "devDependencies": {
     "babel-cli": "^6.9.0",
