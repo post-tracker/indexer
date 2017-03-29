@@ -1,3 +1,4 @@
+const querystring = require( 'querystring' );
 const got = require( 'got' );
 
 const cache = require( './cache.js' );
@@ -5,6 +6,7 @@ const cache = require( './cache.js' );
 class Load {
     async loadFromUrl ( url ) {
         let response = false;
+        const cacheKey = this.getCacheKey( url );
 
         try {
             response = await got( url );
@@ -14,22 +16,39 @@ class Load {
             return false;
         }
 
-        await cache.store( url, response.body );
+        await cache.store( cacheKey, response.body );
 
         return response.body;
     }
 
-    async loadFromCache ( url ) {
-        return await cache.get( url );
+    async loadFromCache ( key ) {
+        return await cache.get( key );
     }
 
-    async get ( url ) {
-        let source = 'cache';
+    getCacheKey ( url, options ) {
+        let cacheKey = '';
 
-        let urlJSONData = await this.loadFromCache( url );
+        if ( options && options.namespace ) {
+            cacheKey = `${ cacheKey }${ options.namespace }`;
+        }
+
+        cacheKey = `${ cacheKey }${ url }`;
+
+        if ( options && options.parameters ) {
+            cacheKey = `${ cacheKey }${ querystring.stringify( options.parameters ) }`;
+        }
+
+        return cacheKey;
+    }
+
+    async get ( url, options ) {
+        let source = 'cache';
+        const cacheKey = this.getCacheKey( url, options );
+
+        let urlJSONData = await this.loadFromCache( cacheKey );
 
         if ( !urlJSONData ) {
-            // console.log( `Couldn't find ${ url } in cache, loading from web` );
+            // console.log( `Couldn't find ${ cacheKey } in cache, loading from external source` );
             source = 'web';
 
             urlJSONData = await this.loadFromUrl( url );
@@ -44,7 +63,7 @@ class Load {
             return JSON.parse( urlJSONData );
         } catch ( parseError ) {
             console.log( `Failed to parse ${ url } from ${ source }.` );
-            await cache.cleanIndex( url );
+            await cache.cleanIndex( cacheKey );
 
             return false;
         }
