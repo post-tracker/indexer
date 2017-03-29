@@ -1,12 +1,14 @@
 const fs = require( 'fs' );
 const path = require( 'path' );
 
+const PERMANENT_CACHE_FOLDER_NAME = 'perm';
 const CACHE_PATH = '../cache';
 const CACHE_TTL = 900000;
 
 class Cache {
     constructor () {
         this.cachePath = path.join( __dirname, CACHE_PATH );
+        this.permanentCachePath = path.join( __dirname, CACHE_PATH, PERMANENT_CACHE_FOLDER_NAME );
     }
 
     create () {
@@ -17,33 +19,56 @@ class Cache {
                     if ( cacheCreateError ) {
                         throw cacheCreateError;
                     }
+
+                    // eslint-disable-next-line no-bitwise
+                    fs.access( this.permanentCachePath, fs.constants.R_OK | fs.constants.W_OK, ( permanentCacheFolderPermissionsError ) => {
+                        if ( permanentCacheFolderPermissionsError ) {
+                            fs.mkdir( this.permanentCachePath, ( permanentCacheCreateError ) => {
+                                if ( permanentCacheCreateError ) {
+                                    throw permanentCacheCreateError;
+                                }
+                            } );
+                        }
+                    } );
+                } );
+            } else {
+                // eslint-disable-next-line no-bitwise
+                fs.access( this.permanentCachePath, fs.constants.R_OK | fs.constants.W_OK, ( permanentCacheFolderPermissionsError ) => {
+                    if ( permanentCacheFolderPermissionsError ) {
+                        fs.mkdir( this.permanentCachePath, ( permanentCacheCreateError ) => {
+                            if ( permanentCacheCreateError ) {
+                                throw permanentCacheCreateError;
+                            }
+                        } );
+                    }
                 } );
             }
         } );
     }
 
     async get ( index ) {
-        return new Promise( ( resolve, reject ) => {
+        return new Promise( ( resolve ) => {
             const filePath = path.join( this.cachePath, this.normalizeName( index ) );
+            const permanentFilePath = path.join( this.permanentCachePath, this.normalizeName( index ) );
 
-            fs.access( filePath, fs.constants.R_OK, ( cacheReadError ) => {
-                if ( cacheReadError ) {
-                    resolve( false );
+            fs.readFile( filePath, 'utf-8', ( readFileError, fileData ) => {
+                if ( readFileError ) {
+                    fs.readFile( permanentFilePath, 'utf-8', ( permanentReadFileError, permanentFileData ) => {
+                        if ( permanentReadFileError ) {
+                            resolve( false );
+
+                            return false;
+                        }
+
+                        resolve( permanentFileData );
+
+                        return true;
+                    } );
 
                     return true;
                 }
 
-                fs.readFile( filePath, 'utf-8', ( readFileError, fileData ) => {
-                    if ( readFileError ) {
-                        reject( readFileError );
-
-                        return false;
-                    }
-
-                    resolve( fileData );
-
-                    return true;
-                } );
+                resolve( fileData );
 
                 return true;
             } );
@@ -54,9 +79,15 @@ class Cache {
         return name.replace( /[^a-zA-Z0-9\-+]/gim, '' );
     }
 
-    async store ( filename, fileData ) {
+    async store ( filename, fileData, permanent = false ) {
         return new Promise( ( resolve, reject ) => {
-            fs.writeFile( path.join( this.cachePath, this.normalizeName( filename ) ), fileData, ( writeError ) => {
+            let cachePath = path.join( this.cachePath, this.normalizeName( filename ) );
+
+            if ( permanent ) {
+                cachePath = path.join( this.permanentCachePath, this.normalizeName( filename ) );
+            }
+
+            fs.writeFile( cachePath, fileData, ( writeError ) => {
                 if ( writeError ) {
                     reject( writeError );
 
@@ -102,6 +133,11 @@ class Cache {
 
             for ( let i = 0; i < files.length; i = i + 1 ) {
                 const filePath = path.join( this.cachePath, files[ i ] );
+
+                // Skip the perm folder
+                if ( files[ i ] === PERMANENT_CACHE_FOLDER_NAME ) {
+                    continue;
+                }
 
                 if ( options && options.force ) {
                     fs.unlink( filePath, ( unlinkError ) => {
