@@ -3,7 +3,8 @@ const path = require( 'path' );
 
 const sqlite3 = require( 'sqlite3' );
 
-const Reddit = require( './modules/Reddit.js' );
+const Indexers = require( './modules/indexers/' );
+
 const cache = require( './modules/cache.js' );
 
 cache.clean();
@@ -46,6 +47,7 @@ for ( let gameIndex = 0; gameIndex < games.length; gameIndex = gameIndex + 1 ) {
             developers.id,
             accounts.uid,
             accounts.identifier,
+            accounts.service,
             developers.active
         FROM
             developers,
@@ -53,19 +55,22 @@ for ( let gameIndex = 0; gameIndex < games.length; gameIndex = gameIndex + 1 ) {
         WHERE
             developers.active = 1
         AND
-            developers.id = accounts.uid
-        AND
-            accounts.service = 'Reddit'`, ( error, developers ) => {
+            developers.id = accounts.uid`, ( error, developers ) => {
         if ( error ) {
             throw error;
         }
 
         for ( let i = 0; i < developers.length; i = i + 1 ) {
-            const user = new Reddit( developers[ i ].uid, developers[ i ].identifier );
+            if ( !Indexers[ developers[ i ].service ] ) {
+                console.log( `Found no indexer for ${ developers[ i ].service }, skipping ` );
+                continue;
+            }
+
+            const user = new Indexers[ developers[ i ].service ]( developers[ i ].uid, developers[ i ].identifier );
 
             user.loadRecentPosts()
                 .then( ( ) => {
-                    const filter = gameData.config.Reddit || false;
+                    const filter = gameData.config[ developers[ i ].service ] || false;
 
                     storePosts( user.postList, databasePath, filter );
                 } )
