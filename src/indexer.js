@@ -1,4 +1,5 @@
 const fs = require( 'fs' );
+const path = require( 'path' );
 
 const sqlite3 = require( 'sqlite3' );
 
@@ -34,8 +35,8 @@ const storePosts = async function storePosts ( posts, databasePath, filterData )
 };
 
 for ( let gameIndex = 0; gameIndex < games.length; gameIndex = gameIndex + 1 ) {
-    const databasePath = `../dev-tracker/dist/${ games[ gameIndex ] }/data/database.sqlite`;
-    const dataPath = `../dev-tracker/games/${ games[ gameIndex ] }/data.json`;
+    const databasePath = path.join( __dirname, `../../dev-tracker/dist/${ games[ gameIndex ] }/data/database.sqlite` );
+    const dataPath = path.join( __dirname, `../../dev-tracker/games/${ games[ gameIndex ] }/data.json` );
     const database = new sqlite3.Database( databasePath );
 
     // eslint-disable-next-line no-sync
