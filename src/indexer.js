@@ -19,7 +19,7 @@ const games = [
     'rimworld',
 ];
 
-console.log( `Indexer starting for ${ games.join( ',' ) }` );
+console.log( `Indexer starting for ${ games.join( ', ' ) }` );
 console.time( 'Indexer' );
 
 process.on( 'exit', () => {
@@ -62,7 +62,7 @@ for ( let gameIndex = 0; gameIndex < games.length; gameIndex = gameIndex + 1 ) {
 
         for ( let i = 0; i < developers.length; i = i + 1 ) {
             if ( !Indexers[ developers[ i ].service ] ) {
-                console.log( `Found no indexer for ${ developers[ i ].service }, skipping ` );
+                // console.log( `Found no indexer for ${ developers[ i ].service }, skipping ` );
                 continue;
             }
 
