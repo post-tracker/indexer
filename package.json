@@ -40,7 +40,7 @@
     ]
   },
   "eslintConfig": {
-    "extends": "kokarn/node",
+    "extends": "kokarn/nodejs",
     "rules": {
       "node/no-unsupported-features": [
         "error",
