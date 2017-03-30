@@ -66,7 +66,7 @@ class Twitter {
 
         switch ( replaceData.type ) {
             case 'photo':
-                replaceString = `<a href="${ replaceData.href }"><img src="${ replaceData.src }" /></a>`;
+                replaceString = `<div><a href="${ replaceData.href }"><img src="${ replaceData.src }" /></a></div>`;
                 replaceRegex = new RegExp( replaceData.search );
 
                 break;
