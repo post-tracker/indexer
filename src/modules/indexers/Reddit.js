@@ -35,7 +35,9 @@ class Reddit {
     }
 
     async getTopic ( topicID ) {
-        return await load.get( this.getTopicLink( topicID ) );
+        return await load.get( this.getTopicLink( topicID ), {
+            permanent: true,
+        } );
     }
 
     findComment ( listing, commentID ) {
