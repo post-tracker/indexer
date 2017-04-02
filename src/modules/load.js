@@ -52,7 +52,13 @@ class Load {
         const cacheKey = this.getCacheKey( url );
 
         try {
-            response = await got( url );
+            response = await got( url,
+                {
+                    headers: {
+                        'user-agent': 'Dev Post Indexer (https://github.com/post-tracker/indexer) by /u/Kokarn'
+                    },
+                }
+            );
         } catch ( urlLoadError ) {
             console.log( `${ url } returned ${ urlLoadError.statusCode }` );
 
