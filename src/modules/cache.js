@@ -3,7 +3,7 @@ const path = require( 'path' );
 
 const PERMANENT_CACHE_FOLDER_NAME = 'perm';
 const CACHE_PATH = '../cache';
-const CACHE_TTL = 900000;
+const CACHE_TTL = 300000;
 
 class Cache {
     constructor () {
@@ -106,7 +106,8 @@ class Cache {
             fs.unlink( path.join( this.cachePath, this.normalizeName( index ) ), ( unlinkError ) => {
                 if ( unlinkError ) {
                     if ( unlinkError.code === 'ENOENT' ) {
-                        reject( new Error( `${ index } has already been cleared.` ) );
+                        // reject( new Error( `${ index } has already been cleared.` ) );
+                        resolve();
                     } else {
                         reject( unlinkError );
                     }

@@ -14,12 +14,26 @@ try {
 }
 
 class Load {
+    constructor () {
+        this.webHits = 0;
+        this.cacheHits = 0;
+        this.providers = {
+            twitter: 0,
+        };
+        this.fails = 0;
+    }
+
     async loadByProvider ( url, options ) {
         switch ( options.provider ) {
             case 'Twitter': {
                 const cacheKey = this.getCacheKey( url, options );
+                let twitterData;
 
                 if ( !config.twitter || !config.twitter.bearer_token || !config.twitter.consumer_key || !config.twitter.consumer_secret ) {
+                    return false;
+                }
+
+                if ( this.twitterLimitExceeded ) {
                     return false;
                 }
 
@@ -32,8 +46,36 @@ class Load {
                     consumer_secret: config.twitter.consumer_secret,
                 } );
 
-                const twitterData = await client.get( url, options.parameters );
+                try {
+                    twitterData = await client.get( url, options.parameters );
+                } catch ( loadingError ) {
+                    switch ( loadingError[ 0 ].code ) {
+                        case 88:
+                            this.twitterLimitExceeded = true;
+
+                            break;
+                        case 34:
+                            // deleted
+                            // falls through
+                        case 144:
+                            // deleted
+                            // falls through
+                        case 179:
+                            // unauthorized
+                            await cache.store( cacheKey, false, options.permanent );
+
+                            break;
+                        default:
+                            console.log( url, options.parameters );
+                            console.log( loadingError[ 0 ].code, loadingError[ 0 ].message );
+                    }
+
+                    return false;
+                }
+
                 const JSONTwitterData = JSON.stringify( twitterData );
+
+                this.providers.twitter = this.providers.twitter + 1;
 
                 await cache.store( cacheKey, JSONTwitterData, options.permanent );
 
@@ -47,7 +89,7 @@ class Load {
         }
     }
 
-    async loadFromUrl ( url ) {
+    async loadFromUrl ( url, options ) {
         let response = false;
         const cacheKey = this.getCacheKey( url );
 
@@ -55,17 +97,19 @@ class Load {
             response = await got( url,
                 {
                     headers: {
-                        'user-agent': 'Dev Post Indexer (https://github.com/post-tracker/indexer) by /u/Kokarn'
+                        'user-agent': 'web:dev-post-indexer:v1.0.0 (by /u/kokarn)',
                     },
                 }
             );
         } catch ( urlLoadError ) {
             console.log( `${ url } returned ${ urlLoadError.statusCode }` );
+            this.fails = this.fails + 1;
 
             return false;
         }
 
-        await cache.store( cacheKey, response.body );
+        this.webHits = this.webHits + 1;
+        await cache.store( cacheKey, response.body, options.permanent );
 
         return response.body;
     }
@@ -90,20 +134,23 @@ class Load {
         return cacheKey;
     }
 
-    async get ( url, options ) {
+    async get ( url, externalOptions ) {
         let source = 'cache';
-        const cacheKey = this.getCacheKey( url, options );
+        const options = Object.assign( {}, externalOptions );
+        const cacheKey = this.getCacheKey( url, externalOptions );
 
         let urlJSONData = await this.loadFromCache( cacheKey );
 
-        if ( !urlJSONData ) {
+        if ( urlJSONData ) {
+            this.cacheHits = this.cacheHits + 1;
+        } else {
             // console.log( `Couldn't find ${ cacheKey } in cache, loading from external source` );
             source = 'web';
 
-            if ( options && options.provider ) {
+            if ( options.provider ) {
                 urlJSONData = await this.loadByProvider( url, options );
             } else {
-                urlJSONData = await this.loadFromUrl( url );
+                urlJSONData = await this.loadFromUrl( url, options );
             }
         }
 

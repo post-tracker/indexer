@@ -1,4 +1,7 @@
+const Reddit = require( './Reddit.js' );
+const Twitter = require( './Twitter.js' );
+
 module.exports = {
-    Reddit: require( './Reddit.js' ),
-    Twitter: require( './Twitter.js' ),
+    Reddit: new Reddit(),
+    Twitter: new Twitter(),
 };

@@ -11,15 +11,14 @@ const xmlEntities = new XmlEntities();
 const htmlEntities = new AllHtmlEntities();
 
 class Reddit {
-    constructor ( uid, identifier ) {
+    constructor () {
         this.apiBase = 'https://www.reddit.com';
         this.userPostsUrl = '/user/{username}.json';
         this.singleCommentUrl = '/comments/{topicID}.json';
 
-        this.uid = uid;
-        this.identifier = identifier;
+        this.requestCount = 0;
 
-        this.postList = [];
+        this.load = load;
     }
 
     decodeHtml ( encodedHtml ) {
@@ -35,6 +34,8 @@ class Reddit {
     }
 
     async getTopic ( topicID ) {
+        this.requestCount = this.requestCount + 1;
+
         return await load.get( this.getTopicLink( topicID ), {
             permanent: true,
         } );
@@ -119,7 +120,7 @@ class Reddit {
         try {
             response = await got( url );
         } catch ( urlLoadError ) {
-            console.log( `${ url } could not be resolved as a real url. It returned a ${ urlLoadError.statusCode }` );
+            // console.log( `${ url } could not be resolved as a real url. It returned a ${ urlLoadError.statusCode }` );
 
             return false;
         }
@@ -127,82 +128,122 @@ class Reddit {
         return response.url;
     }
 
-    async loadRecentPosts () {
-        const url = this.apiBase + this.userPostsUrl.replace( '{username}', this.identifier );
-        const posts = await load.get( url );
+    async parsePost ( uid, currentPost, currentPosts ) {
+        const post = new Post();
+        let parentPost = '';
 
-        if ( !posts || !posts.data.children ) {
-            console.log( `Something is broken with ${ url }` );
+        switch ( currentPost.kind ) {
+            case 't1':
+                // Posted a reply (probably)
+                post.topic = {
+                    title: currentPost.data.link_title,
+                    url: currentPost.data.link_url,
+                };
 
-            return false;
+                if ( currentPost.data.link_url.indexOf( 'www.reddit.com' ) === -1 ) {
+                    const redirectUrl = await this.getRedirectUrl( `${ this.apiBase }/comments/${ this.parseId( currentPost.data.link_id ) }/` );
+
+                    if ( redirectUrl ) {
+                        post.topic.url = redirectUrl;
+                    } else {
+                        // If the redirect is broken, we don't want to store the post right now
+                        return false;
+                    }
+                }
+
+                post.url = `${ post.topic.url }${ currentPost.data.id }/`;
+
+                if ( currentPosts.indexOf( post.url ) > -1 ) {
+                    return false;
+                }
+
+                parentPost = await this.getParentPostHTML( currentPost.data.link_id, currentPost.data.parent_id );
+
+                if ( parentPost === false ) {
+                    return false;
+                }
+
+                post.text = parentPost + this.decodeHtml( currentPost.data.body_html );
+
+                post.text = post.text.replace( /href="\/(.+?)\//gim, 'href="https://reddit.com/$1/' );
+
+                break;
+            case 't3':
+                // Posted a topic (probably)
+                post.topic = {
+                    title: currentPost.data.title,
+                    url: currentPost.data.url,
+                };
+
+                if ( !currentPost.data.selftext_html ) {
+                    // User posted a link to somewhere
+                    return false;
+                }
+
+                post.text = this.decodeHtml( currentPost.data.selftext_html );
+                post.url = currentPost.data.url;
+
+                if ( currentPosts.indexOf( post.url ) > -1 ) {
+                    return false;
+                }
+
+                break;
+            default:
+                console.error( `Unkown reddit type ${ currentPost.kind }` );
+                break;
         }
 
-        for ( let postIndex = 0; postIndex < posts.data.children.length; postIndex = postIndex + 1 ) {
-            const currentPost = posts.data.children[ postIndex ];
-            const post = new Post();
-            let parentPost = '';
+        post.section = currentPost.data.subreddit;
+        post.timestamp = currentPost.data.created_utc;
+        post.uid = uid;
+        post.source = 'Reddit';
 
-            switch ( currentPost.kind ) {
-                case 't1':
-                    // Posted a reply (probably)
-                    post.topic = {
-                        title: currentPost.data.link_title,
-                        url: currentPost.data.link_url,
-                    };
+        return post;
+    }
 
-                    if ( currentPost.data.link_url.indexOf( 'www.reddit.com' ) === -1 ) {
-                        const redirectUrl = await this.getRedirectUrl( `${ this.apiBase }/comments/${ this.parseId( currentPost.data.link_id ) }/` );
+    loadRecentPosts ( uid, identifier, currentPosts ) {
+        return new Promise( ( resolve, reject ) => {
+            const url = this.apiBase + this.userPostsUrl.replace( '{username}', identifier );
 
-                        if ( redirectUrl ) {
-                            post.topic.url = redirectUrl;
-                        } else {
-                            continue;
-                        }
+            load.get( url )
+                .then( ( posts ) => {
+                    const postList = [];
+                    const postPromises = [];
+
+                    if ( !posts || !posts.data.children ) {
+                        console.log( `Something is broken with ${ url }` );
+
+                        return false;
                     }
 
-                    post.url = `${ post.topic.url }${ currentPost.data.id }/`;
+                    for ( let postIndex = 0; postIndex < posts.data.children.length; postIndex = postIndex + 1 ) {
+                        const postPromise = this.parsePost( uid, posts.data.children[ postIndex ], currentPosts )
+                            .then( ( post ) => {
+                                if ( post ) {
+                                    postList.push( post );
+                                }
+                            } )
+                            .catch( ( error ) => {
+                                throw error;
+                            } );
 
-                    parentPost = await this.getParentPostHTML( currentPost.data.link_id, currentPost.data.parent_id );
-
-                    if ( parentPost === false ) {
-                        continue;
+                        postPromises.push( postPromise );
                     }
 
-                    post.text = parentPost + this.decodeHtml( currentPost.data.body_html );
+                    Promise.all( postPromises )
+                        .then( () => {
+                            resolve( postList );
+                        } )
+                        .catch( ( error ) => {
+                            reject( error );
+                        } );
 
-                    post.text = post.text.replace( /href="\/(.+?)\//gim, 'href="https://reddit.com/$1/' );
-
-                    break;
-                case 't3':
-                    // Posted a topic (probably)
-                    post.topic = {
-                        title: currentPost.data.title,
-                        url: currentPost.data.url,
-                    };
-
-                    if ( !currentPost.data.selftext_html ) {
-                        // User posted a link to somewhere
-                        continue;
-                    }
-
-                    post.text = this.decodeHtml( currentPost.data.selftext_html );
-                    post.url = currentPost.data.url;
-
-                    break;
-                default:
-                    console.error( `Unkown reddit type ${ currentPost.kind }` );
-                    break;
-            }
-
-            post.section = currentPost.data.subreddit;
-            post.timestamp = currentPost.data.created_utc;
-            post.uid = this.uid;
-            post.source = 'Reddit';
-
-            this.postList.push( post );
-        }
-
-        return true;
+                    return true;
+                } )
+                .catch( ( error ) => {
+                    reject( error );
+                } );
+        } );
     }
 }
 

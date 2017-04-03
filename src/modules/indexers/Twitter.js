@@ -4,15 +4,14 @@ const Post = require( '../Post.js' );
 const load = require( '../load.js' );
 
 class Twitter {
-    constructor ( uid, identifier ) {
+    constructor () {
         this.apiPath = 'https://api.twitter.com/1.1';
         this.userTweetsPath = '/statuses/user_timeline';
         this.singleTweetPath = '/statuses/show';
 
-        this.uid = uid;
-        this.identifier = identifier;
-
         this.postList = [];
+
+        this.load = load;
 
         this.parsers = {
             hashtags: ( tag ) => {
@@ -129,21 +128,26 @@ class Twitter {
         return tweetText;
     }
 
-    async loadRecentPosts () {
+    async loadRecentPosts ( uid, identifier, currentPosts ) {
         const tweets = await load.get( `${ this.userTweetsPath }`, {
             namespace: 'https://api.twitter.com/1.1',
             parameters: {
                 count: 50,
                 // eslint-disable-next-line camelcase
-                screen_name: this.identifier,
+                screen_name: identifier,
             },
             provider: 'Twitter',
         } );
+        const postList = [];
 
         for ( let tweetIndex = 0; tweetIndex < tweets.length; tweetIndex = tweetIndex + 1 ) {
             const post = new Post();
 
             post.url = `https://twitter.com/${ tweets[ tweetIndex ].user.screen_name }/status/${ tweets[ tweetIndex ].id_str }/`;
+
+            if ( currentPosts.indexOf( post.url ) > -1 ) {
+                continue;
+            }
 
             post.text = this.tweetToHTML( tweets[ tweetIndex ] );
 
@@ -152,14 +156,16 @@ class Twitter {
             }
 
             post.timestamp = moment( tweets[ tweetIndex ].created_at, 'ddd MMM DD, HH:mm:ss ZZ YYYY' ).unix();
-            post.uid = this.uid;
+            post.uid = uid;
             post.source = 'Twitter';
             post.topic = {
                 title: 'tweeted',
             };
 
-            this.postList.push( post );
+            postList.push( post );
         }
+
+        return postList;
     }
 }
 
