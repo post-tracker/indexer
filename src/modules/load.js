@@ -49,6 +49,12 @@ class Load {
                 try {
                     twitterData = await client.get( url, options.parameters );
                 } catch ( loadingError ) {
+                    if ( !loadingError[ 0 ] ) {
+                        console.log( loadingError );
+
+                        return false;
+                    }
+
                     switch ( loadingError[ 0 ].code ) {
                         case 88:
                             this.twitterLimitExceeded = true;
