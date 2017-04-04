@@ -140,8 +140,8 @@ const run = function run () {
 
                     Promise.all( indexerPromises )
                         .then( () => {
-                            // console.log( service, Indexers[ service ].load );
-                            // console.timeEnd( `${ games[ gameIndex ] }-${ service }` );
+                            console.log( service, Indexers[ service ].load );
+                            console.timeEnd( `${ games[ gameIndex ] }-${ service }` );
                         } )
                         .catch( ( indexerError ) => {
                             throw indexerError;
