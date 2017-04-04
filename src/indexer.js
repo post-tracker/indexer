@@ -141,7 +141,7 @@ for ( let gameIndex = 0; gameIndex < games.length; gameIndex = gameIndex + 1 ) {
 
                 Promise.all( indexerPromises )
                     .then( () => {
-                        console.log( service, Indexers[ service ].load );
+                        // console.log( service, Indexers[ service ].load );
                         // console.timeEnd( `${ games[ gameIndex ] }-${ service }` );
                     } )
                     .catch( ( indexerError ) => {
