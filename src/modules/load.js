@@ -11,7 +11,7 @@ try {
     // eslint-disable-next-line global-require
     config = require( path.join( __dirname, '../../config.js' ) );
 } catch ( configLoadError ) {
-    console.log( 'Unable to find config file, starting without' );
+    console.error( 'Unable to find config file, starting without' );
 }
 
 class Load {
