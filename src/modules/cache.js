@@ -1,4 +1,4 @@
-const fs = require( 'fs' );
+const fs = require( 'mz/fs' );
 const path = require( 'path' );
 
 const PERMANENT_CACHE_FOLDER_NAME = 'perm';
@@ -80,95 +80,65 @@ class Cache {
     }
 
     async store ( filename, fileData, permanent = false ) {
-        return new Promise( ( resolve, reject ) => {
-            let cachePath = path.join( this.cachePath, this.normalizeName( filename ) );
+        let cachePath = path.join( this.cachePath, this.normalizeName( filename ) );
 
-            if ( permanent ) {
-                cachePath = path.join( this.permanentCachePath, this.normalizeName( filename ) );
-            }
+        if ( permanent ) {
+            cachePath = path.join( this.permanentCachePath, this.normalizeName( filename ) );
+        }
 
-            fs.writeFile( cachePath, fileData, ( writeError ) => {
-                if ( writeError ) {
-                    reject( writeError );
+        await fs.writeFile( cachePath, fileData );
 
-                    return false;
-                }
-
-                resolve();
-
-                return true;
-            } );
-        } );
+        return true;
     }
 
     async cleanIndex ( index ) {
-        return new Promise( ( resolve, reject ) => {
-            fs.unlink( path.join( this.cachePath, this.normalizeName( index ) ), ( unlinkError ) => {
-                if ( unlinkError ) {
-                    if ( unlinkError.code === 'ENOENT' ) {
-                        // reject( new Error( `${ index } has already been cleared.` ) );
-                        resolve();
-                    } else {
-                        reject( unlinkError );
-                    }
-
-                    return false;
+        try {
+            await fs.unlink( path.join( this.cachePath, this.normalizeName( index ) ) );
+        } catch ( unlinkError ) {
+            if ( unlinkError ) {
+                if ( unlinkError.code === 'ENOENT' ) {
+                    return true;
                 }
 
-                console.log( `${ index } has been cleared individually` );
+                return false;
+            }
+        }
 
-                resolve();
-
-                return true;
-            } );
-        } );
+        return true;
     }
 
-    clean ( options ) {
+    async clean ( options ) {
         const currentDate = new Date().getTime();
 
-        fs.readdir( this.cachePath, ( readDirError, files ) => {
-            if ( readDirError ) {
-                throw readDirError;
+        console.time( 'Cache clean' );
+
+        const files = await fs.readdir( this.cachePath );
+
+        for ( let i = 0; i < files.length; i = i + 1 ) {
+            const filePath = path.join( this.cachePath, files[ i ] );
+
+            // Skip the perm folder
+            if ( files[ i ] === PERMANENT_CACHE_FOLDER_NAME ) {
+                continue;
             }
 
-            for ( let i = 0; i < files.length; i = i + 1 ) {
-                const filePath = path.join( this.cachePath, files[ i ] );
+            if ( options && options.force ) {
+                fs.unlink( filePath );
 
-                // Skip the perm folder
-                if ( files[ i ] === PERMANENT_CACHE_FOLDER_NAME ) {
-                    continue;
-                }
+                console.log( `${ files[ i ] } has been cleared` );
 
-                if ( options && options.force ) {
-                    fs.unlink( filePath, ( unlinkError ) => {
-                        if ( unlinkError ) {
-                            throw unlinkError;
-                        }
-
-                        console.log( `${ files[ i ] } has been cleared` );
-                    } );
-
-                    continue;
-                }
-
-                fs.stat( filePath, ( statError, stats ) => {
-                    if ( statError ) {
-                        throw statError;
-                    }
-
-                    if ( currentDate - stats.ctime.getTime() > CACHE_TTL ) {
-                        fs.unlink( filePath, ( unlinkError ) => {
-                            if ( unlinkError ) {
-                                throw unlinkError;
-                            }
-
-                            // console.log( `${ files[ i ] } was older than ${ CACHE_TTL } ms and has been cleared` );
-                        } );
-                    }
-                } );
+                continue;
             }
-        } );
+
+            const stats = await fs.stat( filePath );
+
+            if ( currentDate - stats.ctime.getTime() > CACHE_TTL ) {
+                fs.unlink( filePath );
+                // console.log( `${ files[ i ] } was older than ${ CACHE_TTL } ms and has been cleared` );
+            }
+        }
+
+        console.timeEnd( 'Cache clean' );
     }
 }
 
