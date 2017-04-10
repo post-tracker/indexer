@@ -3,11 +3,15 @@ const moment = require( 'moment' );
 const Post = require( '../Post.js' );
 const load = require( '../load.js' );
 
+const postIndex = require( '../postindexed.js' );
+
 class Twitter {
     constructor () {
         this.apiPath = 'https://api.twitter.com/1.1';
         this.userTweetsPath = '/statuses/user_timeline';
         this.singleTweetPath = '/statuses/show';
+
+        this.identifier = 'Twitter';
 
         this.postList = [];
 
@@ -94,10 +98,16 @@ class Twitter {
     }
 
     async getParentTweet ( tweetId ) {
-        const parentTweetData = await this.getTweet( tweetId );
+        const parentTweetData = JSON.parse( await this.getTweet( tweetId ) );
 
         if ( !parentTweetData ) {
             return false;
+        }
+
+        if ( typeof parentTweetData.user === 'undefined' ) {
+            console.log( typeof parentTweetData );
+            console.log( parentTweetData );
+            process.exit();
         }
 
         return `<blockquote><div><b><a href="https://twitter.com/${ parentTweetData.user.screen_name }/status/${ parentTweetData.id_str }/">@${ parentTweetData.user.screen_name }</a></b></div>${ this.tweetToHTML( parentTweetData ) }</blockquote>`;
@@ -128,44 +138,64 @@ class Twitter {
         return tweetText;
     }
 
-    async loadRecentPosts ( uid, identifier, currentPosts ) {
-        const tweets = await load.get( `${ this.userTweetsPath }`, {
-            namespace: 'https://api.twitter.com/1.1',
-            parameters: {
-                count: 50,
-                // eslint-disable-next-line camelcase
-                screen_name: identifier,
-            },
-            provider: 'Twitter',
+    loadRecentPosts ( user, config ) {
+        return new Promise( async ( resolve, reject ) => {
+            const tweets = JSON.parse( await load.get( `${ this.userTweetsPath }`, {
+                namespace: 'https://api.twitter.com/1.1',
+                parameters: {
+                    count: 50,
+                    // eslint-disable-next-line camelcase
+                    screen_name: user.identifier,
+                },
+                provider: 'Twitter',
+            } ) );
+            const postList = [];
+            const postPromises = [];
+
+            for ( let tweetIndex = 0; tweetIndex < tweets.length; tweetIndex = tweetIndex + 1 ) {
+                postPromises.push( new Promise( ( postResolve, postReject ) => {
+                    const post = Object.assign( new Post(), user );
+
+                    post.game = config.game;
+                    post.url = `https://twitter.com/${ tweets[ tweetIndex ].user.screen_name }/status/${ tweets[ tweetIndex ].id_str }/`;
+
+                    postIndex.exists( post.url )
+                        .then( async ( exists ) => {
+                            if ( exists ) {
+                                postResolve();
+
+                                return true;
+                            }
+
+                            post.text = this.tweetToHTML( tweets[ tweetIndex ] );
+
+                            if ( tweets[ tweetIndex ].in_reply_to_status_id_str ) {
+                                post.text = `${ await this.getParentTweet( tweets[ tweetIndex ].in_reply_to_status_id_str ) }${ post.text }`;
+                            }
+
+                            post.timestamp = moment( tweets[ tweetIndex ].created_at, 'ddd MMM DD, HH:mm:ss ZZ YYYY' ).unix();
+                            post.source = this.identifier;
+                            post.topicTitle = 'tweeted';
+
+                            postList.push( post );
+                            postResolve();
+
+                            return true;
+                        } )
+                        .catch( ( error ) => {
+                            postReject( error );
+                        } );
+                } ) );
+            }
+
+            Promise.all( postPromises )
+                .then( () => {
+                    resolve( postList );
+                } )
+                .catch( ( error ) => {
+                    reject( error );
+                } );
         } );
-        const postList = [];
-
-        for ( let tweetIndex = 0; tweetIndex < tweets.length; tweetIndex = tweetIndex + 1 ) {
-            const post = new Post();
-
-            post.url = `https://twitter.com/${ tweets[ tweetIndex ].user.screen_name }/status/${ tweets[ tweetIndex ].id_str }/`;
-
-            if ( currentPosts.indexOf( post.url ) > -1 ) {
-                continue;
-            }
-
-            post.text = this.tweetToHTML( tweets[ tweetIndex ] );
-
-            if ( tweets[ tweetIndex ].in_reply_to_status_id_str ) {
-                post.text = `${ await this.getParentTweet( tweets[ tweetIndex ].in_reply_to_status_id_str ) }${ post.text }`;
-            }
-
-            post.timestamp = moment( tweets[ tweetIndex ].created_at, 'ddd MMM DD, HH:mm:ss ZZ YYYY' ).unix();
-            post.uid = uid;
-            post.source = 'Twitter';
-            post.topic = {
-                title: 'tweeted',
-            };
-
-            postList.push( post );
-        }
-
-        return postList;
     }
 }
 

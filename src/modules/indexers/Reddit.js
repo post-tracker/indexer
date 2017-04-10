@@ -6,6 +6,7 @@ const {
 
 const Post = require( '../Post.js' );
 const load = require( '../load.js' );
+const postIndex = require( '../postindexed.js' );
 
 const xmlEntities = new XmlEntities();
 const htmlEntities = new AllHtmlEntities();
@@ -84,7 +85,7 @@ class Reddit {
     }
 
     async getParentPostHTML ( topicID, commentID ) {
-        const topicData = await this.getTopic( topicID );
+        const topicData = JSON.parse( await this.getTopic( topicID ) );
         const commentData = this.findCommentInTopic( topicData, commentID );
 
         if ( !commentData ) {
@@ -128,32 +129,30 @@ class Reddit {
         return response.url;
     }
 
-    async parsePost ( uid, currentPost, currentPosts ) {
-        const post = new Post();
+    async parsePost ( user, currentPost ) {
+        const post = Object.assign( new Post(), user );
         let parentPost = '';
 
         switch ( currentPost.kind ) {
             case 't1':
                 // Posted a reply (probably)
-                post.topic = {
-                    title: currentPost.data.link_title,
-                    url: currentPost.data.link_url,
-                };
+                post.topic = currentPost.data.link_title;
+                post.topicUrl = currentPost.data.link_url;
 
                 if ( currentPost.data.link_url.indexOf( 'www.reddit.com' ) === -1 ) {
                     const redirectUrl = await this.getRedirectUrl( `${ this.apiBase }/comments/${ this.parseId( currentPost.data.link_id ) }/` );
 
                     if ( redirectUrl ) {
-                        post.topic.url = redirectUrl;
+                        post.topicUrl = redirectUrl;
                     } else {
                         // If the redirect is broken, we don't want to store the post right now
                         return false;
                     }
                 }
 
-                post.url = `${ post.topic.url }${ currentPost.data.id }/`;
+                post.url = `${ post.topicUrl }${ currentPost.data.id }/`;
 
-                if ( currentPosts.indexOf( post.url ) > -1 ) {
+                if ( await postIndex.exists( post.url ) ) {
                     return false;
                 }
 
@@ -170,10 +169,8 @@ class Reddit {
                 break;
             case 't3':
                 // Posted a topic (probably)
-                post.topic = {
-                    title: currentPost.data.title,
-                    url: currentPost.data.url,
-                };
+                post.topic = currentPost.data.title;
+                post.topicUrl = currentPost.data.url;
 
                 if ( !currentPost.data.selftext_html ) {
                     // User posted a link to somewhere
@@ -183,7 +180,7 @@ class Reddit {
                 post.text = this.decodeHtml( currentPost.data.selftext_html );
                 post.url = currentPost.data.url;
 
-                if ( currentPosts.indexOf( post.url ) > -1 ) {
+                if ( await postIndex.exists( post.url ) ) {
                     return false;
                 }
 
@@ -195,18 +192,18 @@ class Reddit {
 
         post.section = currentPost.data.subreddit;
         post.timestamp = currentPost.data.created_utc;
-        post.uid = uid;
         post.source = 'Reddit';
 
         return post;
     }
 
-    loadRecentPosts ( uid, identifier, currentPosts ) {
+    loadRecentPosts ( user, indexerConfig ) {
         return new Promise( ( resolve, reject ) => {
-            const url = this.apiBase + this.userPostsUrl.replace( '{username}', identifier );
+            const url = this.apiBase + this.userPostsUrl.replace( '{username}', user.identifier );
 
             load.get( url )
-                .then( ( posts ) => {
+                .then( ( JSONData ) => {
+                    const posts = JSON.parse( JSONData );
                     const postList = [];
                     const postPromises = [];
 
@@ -216,8 +213,8 @@ class Reddit {
                         return false;
                     }
 
-                    for ( let postIndex = 0; postIndex < posts.data.children.length; postIndex = postIndex + 1 ) {
-                        const postPromise = this.parsePost( uid, posts.data.children[ postIndex ], currentPosts )
+                    for ( let index = 0; index < posts.data.children.length; index = index + 1 ) {
+                        const postPromise = this.parsePost( user, posts.data.children[ index ] )
                             .then( ( post ) => {
                                 if ( post ) {
                                     postList.push( post );

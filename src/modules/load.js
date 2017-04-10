@@ -58,7 +58,10 @@ class Load {
 
                     switch ( loadingError[ 0 ].code ) {
                         case 88:
+                            console.error( 'Stopping twitter, we\'ve exceeded our limit' );
                             this.twitterLimitExceeded = true;
+
+                            console.log( this );
 
                             break;
                         case 34:
@@ -80,13 +83,11 @@ class Load {
                     return false;
                 }
 
-                const JSONTwitterData = JSON.stringify( twitterData );
-
+                twitterData = JSON.stringify( twitterData );
                 this.providers.twitter = this.providers.twitter + 1;
+                await cache.store( cacheKey, twitterData, options.permanent );
 
-                await cache.store( cacheKey, JSONTwitterData, options.permanent );
-
-                return JSONTwitterData;
+                return twitterData;
             }
             default: {
                 console.error( `Unknown provider "${ options.provider } "` );
@@ -142,38 +143,25 @@ class Load {
     }
 
     async get ( url, externalOptions ) {
-        let source = 'cache';
         const options = Object.assign( {}, externalOptions );
         const cacheKey = this.getCacheKey( url, externalOptions );
 
-        let urlJSONData = await this.loadFromCache( cacheKey );
+        let urlData = await this.loadFromCache( cacheKey );
 
-        if ( urlJSONData ) {
+        if ( urlData ) {
             this.cacheHits = this.cacheHits + 1;
+        } else if ( options.provider ) {
+            urlData = await this.loadByProvider( url, options );
         } else {
-            // console.log( `Couldn't find ${ cacheKey } in cache, loading from external source` );
-            source = 'web';
-
-            if ( options.provider ) {
-                urlJSONData = await this.loadByProvider( url, options );
-            } else {
-                urlJSONData = await this.loadFromUrl( url, options );
-            }
+            urlData = await this.loadFromUrl( url, options );
         }
 
         // Early return if we don't have data because false is valid JSON
-        if ( urlJSONData === false ) {
+        if ( urlData === false ) {
             return false;
         }
 
-        try {
-            return JSON.parse( urlJSONData );
-        } catch ( parseError ) {
-            console.log( `Failed to parse ${ url } from ${ source }.` );
-            await cache.cleanIndex( cacheKey );
-
-            return false;
-        }
+        return urlData;
     }
 }
 
