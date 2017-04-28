@@ -87,6 +87,12 @@ class Twitter {
         let updatedTweetText = tweetText;
 
         for ( let i = 0; i < entityData.length; i = i + 1 ) {
+            if ( !this.parsers[ entityType ] ) {
+                console.error( `No parser added for type ${ entityType }` );
+
+                return updatedTweetText;
+            }
+
             updatedTweetText = this.replaceString( updatedTweetText, this.parsers[ entityType ]( entityData[ i ] ) );
         }
 
