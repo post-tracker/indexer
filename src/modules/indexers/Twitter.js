@@ -108,6 +108,8 @@ class Twitter {
             namespace: 'https://api.twitter.com/1.1',
             parameters: {
                 id: tweetId,
+                // eslint-disable-next-line camelcase
+                tweet_mode: 'extended',
             },
             permanent: true,
             provider: 'Twitter',
@@ -115,7 +117,7 @@ class Twitter {
     }
 
     tweetToHTML ( tweet ) {
-        let tweetText = tweet.text;
+        let tweetText = tweet.full_text || tweet.text;
 
         for ( const key in tweet.entities ) {
             if ( tweet.entities[ key ].length <= 0 ) {
@@ -135,6 +137,8 @@ class Twitter {
                 count: 50,
                 // eslint-disable-next-line camelcase
                 screen_name: identifier,
+                // eslint-disable-next-line camelcase
+                tweet_mode: 'extended',
             },
             provider: 'Twitter',
         } );
