@@ -16,6 +16,7 @@ const games = [
     'pubg',
     'rainbow6',
     'rimworld',
+    'destiny',
 ];
 
 const INDEX_INTERVAL = 6;
