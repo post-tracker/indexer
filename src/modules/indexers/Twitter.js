@@ -146,6 +146,8 @@ class Twitter {
             parameters: {
                 count: 50,
                 // eslint-disable-next-line camelcase
+                include_rts: false,
+                // eslint-disable-next-line camelcase
                 screen_name: this.userId,
                 // eslint-disable-next-line camelcase
                 tweet_mode: 'extended',
