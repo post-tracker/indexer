@@ -1,5 +1,7 @@
 const https = require( 'https' );
 const querystring = require( 'querystring' );
+const fs = require( 'fs' );
+const path = require( 'path' );
 
 const API_HOST = 'api.kokarn.com';
 const API_PORT = 443;
@@ -8,8 +10,9 @@ const API_PORT = 443;
 
 const SUCESS_STATUS_CODE = 200;
 
-// eslint-disable-next-line no-process-env
-const API_TOKEN = process.env.apiToken;
+// eslint-disable-next-line no-sync
+const config = JSON.parse( fs.readFileSync( path.join( __dirname, '../../config/config.json' ), 'utf-8' ) );
+const API_TOKEN = config.apiToken;
 
 if ( !API_TOKEN ) {
     throw new Error( 'Unable to load API token' );
