@@ -3,20 +3,31 @@ const {
     AllHtmlEntities,
     XmlEntities,
 } = require( 'html-entities' );
+const sha1 = require( 'sha1' );
 
 const Post = require( '../Post.js' );
-const load = require( '../load.js' );
 
 const xmlEntities = new XmlEntities();
 const htmlEntities = new AllHtmlEntities();
 
 class Reddit {
-    constructor () {
+    constructor ( userId, indexerConfig, hashes, load ) {
         this.apiBase = 'https://www.reddit.com';
         this.userPostsUrl = '/user/{username}.json';
         this.singleCommentUrl = '/comments/{topicID}.json';
 
         this.requestCount = 0;
+
+        this.postHashes = hashes;
+        this.userId = userId;
+
+        this.stats = {
+            existing: 0,
+            link: 0,
+            noParent: 0,
+            noRedirect: 0,
+            notFoundInTopic: 0,
+        };
 
         this.load = load;
     }
@@ -36,7 +47,8 @@ class Reddit {
     async getTopic ( topicID ) {
         this.requestCount = this.requestCount + 1;
 
-        return await load.get( this.getTopicLink( topicID ), {
+        return await this.load.get( this.getTopicLink( topicID ), {
+            isJSON: true,
             permanent: true,
         } );
     }
@@ -88,7 +100,8 @@ class Reddit {
         const commentData = this.findCommentInTopic( topicData, commentID );
 
         if ( !commentData ) {
-            // throw new Error( `Unable to find post with id ${ commentID } in ${ topicID }` );
+            // console.log( `Unable to find post with id ${ commentID } in ${ topicID }` );
+            this.stats.notFoundInTopic = this.stats.notFoundInTopic + 1;
 
             return false;
         }
@@ -98,7 +111,6 @@ class Reddit {
         if ( !text ) {
             // If we reply directly to a topic, this might be the case
             return '';
-            // throw new Error( `Unable to load text for ${ commentID }. Got ${ JSON.stringify( commentData, null, 4 ) }` );
         }
 
         return `<blockquote>
@@ -120,7 +132,7 @@ class Reddit {
         try {
             response = await got( url );
         } catch ( urlLoadError ) {
-            // console.log( `${ url } could not be resolved as a real url. It returned a ${ urlLoadError.statusCode }` );
+            // console.log( `${ url } could not be resolved as. It returned a ${ urlLoadError.statusCode }` );
 
             return false;
         }
@@ -128,38 +140,45 @@ class Reddit {
         return response.url;
     }
 
-    async parsePost ( uid, currentPost, currentPosts ) {
+    async parsePost ( currentPost ) {
         const post = new Post();
         let parentPost = '';
 
         switch ( currentPost.kind ) {
             case 't1':
                 // Posted a reply (probably)
-                post.topic = {
-                    title: currentPost.data.link_title,
-                    url: currentPost.data.link_url,
-                };
+                post.topicTitle = currentPost.data.link_title;
+                post.topicUrl = currentPost.data.link_url;
 
                 if ( currentPost.data.link_url.indexOf( 'www.reddit.com' ) === -1 ) {
                     const redirectUrl = await this.getRedirectUrl( `${ this.apiBase }/comments/${ this.parseId( currentPost.data.link_id ) }/` );
 
                     if ( redirectUrl ) {
-                        post.topic.url = redirectUrl;
+                        post.topicUrl = redirectUrl;
                     } else {
                         // If the redirect is broken, we don't want to store the post right now
+                        console.log( 'Got no redirect' );
+                        this.stats.noRedirect = this.stats.noRedirect + 1;
+
                         return false;
                     }
                 }
 
-                post.url = `${ post.topic.url }${ currentPost.data.id }/`;
+                post.url = `${ post.topicUrl }${ currentPost.data.id }/`;
 
-                if ( currentPosts.indexOf( post.url ) > -1 ) {
+                if ( this.postHashes.indexOf( sha1( post.url ) ) > -1 ) {
+                    // console.log( 'Post exists' );
+                    this.stats.existing = this.stats.existing + 1;
+
                     return false;
                 }
 
                 parentPost = await this.getParentPostHTML( currentPost.data.link_id, currentPost.data.parent_id );
 
                 if ( parentPost === false ) {
+                    // console.log( 'Could not get parent post' );
+                    this.stats.noParent = this.stats.noParent + 1;
+
                     return false;
                 }
 
@@ -170,20 +189,24 @@ class Reddit {
                 break;
             case 't3':
                 // Posted a topic (probably)
-                post.topic = {
-                    title: currentPost.data.title,
-                    url: currentPost.data.url,
-                };
+                post.topicTitle = currentPost.data.title;
+                post.topicUrl = currentPost.data.url;
 
                 if ( !currentPost.data.selftext_html ) {
                     // User posted a link to somewhere
+                    // console.log( 'Post to link' );
+                    this.stats.link = this.stats.link + 1;
+
                     return false;
                 }
 
                 post.text = this.decodeHtml( currentPost.data.selftext_html );
                 post.url = currentPost.data.url;
 
-                if ( currentPosts.indexOf( post.url ) > -1 ) {
+                if ( this.postHashes.indexOf( sha1( post.url ) ) > -1 ) {
+                    // console.log( 'Post exists' );
+                    this.stats.existing = this.stats.existing + 1;
+
                     return false;
                 }
 
@@ -195,17 +218,17 @@ class Reddit {
 
         post.section = currentPost.data.subreddit;
         post.timestamp = currentPost.data.created_utc;
-        post.uid = uid;
-        post.source = 'Reddit';
 
         return post;
     }
 
-    loadRecentPosts ( uid, identifier, currentPosts ) {
+    loadRecentPosts () {
         return new Promise( ( resolve, reject ) => {
-            const url = this.apiBase + this.userPostsUrl.replace( '{username}', identifier );
+            const url = this.apiBase + this.userPostsUrl.replace( '{username}', this.userId );
 
-            load.get( url )
+            this.load.get( url, {
+                isJSON: true,
+            } )
                 .then( ( posts ) => {
                     const postList = [];
                     const postPromises = [];
@@ -217,7 +240,7 @@ class Reddit {
                     }
 
                     for ( let postIndex = 0; postIndex < posts.data.children.length; postIndex = postIndex + 1 ) {
-                        const postPromise = this.parsePost( uid, posts.data.children[ postIndex ], currentPosts )
+                        const postPromise = this.parsePost( posts.data.children[ postIndex ] )
                             .then( ( post ) => {
                                 if ( post ) {
                                     postList.push( post );
@@ -232,6 +255,7 @@ class Reddit {
 
                     Promise.all( postPromises )
                         .then( () => {
+                            // console.log( JSON.stringify( this.stats, null, 4 ) );
                             resolve( postList );
                         } )
                         .catch( ( error ) => {

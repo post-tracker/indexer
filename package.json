@@ -11,7 +11,7 @@
     "pretest": "eslint src/**/*.js"
   },
   "engines": {
-    "node": "^6.9.0"
+    "node": "^8.1.0"
   },
   "repository": {
     "type": "git",
@@ -24,26 +24,36 @@
   },
   "homepage": "https://github.com/post-tracker/indexer#readme",
   "dependencies": {
+    "chalk": "^2.0.1",
+    "cheerio": "^1.0.0-rc.1",
+    "feedme": "^1.0.0",
     "got": "^6.7.1",
     "html-entities": "^1.2.0",
     "moment": "^2.18.1",
     "mz": "^2.6.0",
-    "sqlite3": "^3.1.8",
+    "sha1": "^1.1.1",
     "twitter": "^1.7.0"
   },
   "devDependencies": {
     "babel-cli": "^6.9.0",
+    "babel-plugin-transform-object-rest-spread": "^6.23.0",
     "babel-plugin-transform-async-to-generator": "^6.8.0",
     "eslint": "^3.13.1",
-    "eslint-config-kokarn": "^1.1.0"
+    "eslint-config-kokarn": "^2.0.0"
   },
   "babel": {
     "plugins": [
-      "transform-async-to-generator"
+      "transform-async-to-generator",
+      "transform-object-rest-spread"
     ]
   },
   "eslintConfig": {
     "extends": "kokarn/nodejs",
+    "parserOptions": {
+      "ecmaFeatures": {
+        "experimentalObjectRestSpread": true
+      }
+    },
     "rules": {
       "node/no-unsupported-features": [
         "error",

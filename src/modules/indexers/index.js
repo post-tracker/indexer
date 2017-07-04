@@ -1,7 +1,9 @@
-const Reddit = require( './Reddit.js' );
-const Twitter = require( './Twitter.js' );
-
+// eslint-disable global-require
 module.exports = {
-    Reddit: new Reddit(),
-    Twitter: new Twitter(),
+    InvisionPowerBoard: require( './InvisionPowerBoard.js' ),
+    MiggyRSS: require( './MiggyRSS.js' ),
+    Reddit: require( './Reddit.js' ),
+    SimpleMachinesForum: require( './SimpleMachinesForum.js' ),
+    Steam: require( './Steam.js' ),
+    Twitter: require( './Twitter.js' ),
 };

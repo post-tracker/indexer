@@ -1,16 +1,18 @@
 const moment = require( 'moment' );
+const sha1 = require( 'sha1' );
 
 const Post = require( '../Post.js' );
-const load = require( '../load.js' );
 
 class Twitter {
-    constructor () {
+    constructor ( userId, indexerConfig, hashes, load ) {
         this.apiPath = 'https://api.twitter.com/1.1';
         this.userTweetsPath = '/statuses/user_timeline';
         this.singleTweetPath = '/statuses/show';
 
         this.postList = [];
 
+        this.postHashes = hashes;
+        this.userId = userId;
         this.load = load;
 
         this.parsers = {
@@ -110,7 +112,7 @@ class Twitter {
     }
 
     async getTweet ( tweetId ) {
-        return await load.get( this.singleTweetPath, {
+        return await this.load.get( this.singleTweetPath, {
             namespace: 'https://api.twitter.com/1.1',
             parameters: {
                 id: tweetId,
@@ -136,13 +138,13 @@ class Twitter {
         return tweetText;
     }
 
-    async loadRecentPosts ( uid, identifier, currentPosts ) {
-        const tweets = await load.get( `${ this.userTweetsPath }`, {
+    async loadRecentPosts () {
+        const tweets = await this.load.get( `${ this.userTweetsPath }`, {
             namespace: 'https://api.twitter.com/1.1',
             parameters: {
                 count: 50,
                 // eslint-disable-next-line camelcase
-                screen_name: identifier,
+                screen_name: this.userId,
                 // eslint-disable-next-line camelcase
                 tweet_mode: 'extended',
             },
@@ -155,7 +157,7 @@ class Twitter {
 
             post.url = `https://twitter.com/${ tweets[ tweetIndex ].user.screen_name }/status/${ tweets[ tweetIndex ].id_str }/`;
 
-            if ( currentPosts.indexOf( post.url ) > -1 ) {
+            if ( this.postHashes.indexOf( sha1( post.url ) ) > -1 ) {
                 continue;
             }
 
@@ -166,11 +168,7 @@ class Twitter {
             }
 
             post.timestamp = moment( tweets[ tweetIndex ].created_at, 'ddd MMM DD, HH:mm:ss ZZ YYYY' ).unix();
-            post.uid = uid;
-            post.source = 'Twitter';
-            post.topic = {
-                title: 'tweeted',
-            };
+            post.topicTitle = 'tweeted';
 
             postList.push( post );
         }

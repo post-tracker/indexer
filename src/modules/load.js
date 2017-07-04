@@ -11,7 +11,7 @@ try {
     // eslint-disable-next-line global-require
     config = require( path.join( __dirname, '../../config.js' ) );
 } catch ( configLoadError ) {
-    console.error( 'Unable to find config file, starting without' );
+    console.error( 'Unable to find load module config file, starting without' );
 }
 
 class Load {
@@ -141,33 +141,37 @@ class Load {
         return cacheKey;
     }
 
-    async get ( url, externalOptions ) {
+    async get ( url, fetchOptions ) {
         let source = 'cache';
-        const options = Object.assign( {}, externalOptions );
-        const cacheKey = this.getCacheKey( url, externalOptions );
+        const options = Object.assign( {}, fetchOptions );
+        const cacheKey = this.getCacheKey( url, fetchOptions );
 
-        let urlJSONData = await this.loadFromCache( cacheKey );
+        let urlData = await this.loadFromCache( cacheKey );
 
-        if ( urlJSONData ) {
+        if ( urlData ) {
             this.cacheHits = this.cacheHits + 1;
         } else {
             // console.log( `Couldn't find ${ cacheKey } in cache, loading from external source` );
             source = 'web';
 
             if ( options.provider ) {
-                urlJSONData = await this.loadByProvider( url, options );
+                urlData = await this.loadByProvider( url, options );
             } else {
-                urlJSONData = await this.loadFromUrl( url, options );
+                urlData = await this.loadFromUrl( url, options );
             }
         }
 
         // Early return if we don't have data because false is valid JSON
-        if ( urlJSONData === false ) {
+        if ( urlData === false ) {
             return false;
         }
 
+        if ( !fetchOptions || !fetchOptions.isJSON ) {
+            return urlData;
+        }
+
         try {
-            return JSON.parse( urlJSONData );
+            return JSON.parse( urlData );
         } catch ( parseError ) {
             console.log( `Failed to parse ${ url } from ${ source }.` );
             await cache.cleanIndex( cacheKey );

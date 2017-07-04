@@ -1,27 +1,19 @@
 const fs = require( 'fs' );
 const path = require( 'path' );
 
-const sqlite3 = require( 'sqlite3' );
+const chalk = require( 'chalk' );
 
 const Indexers = require( './modules/indexers/' );
-
 const cache = require( './modules/cache.js' );
+const api = require( './modules/api.js' );
+const load = require( './modules/load.js' );
 
-const games = [
-    'ark',
-    'battlefield1',
-    'conan',
-    'csgo',
-    'elite',
-    'pubg',
-    'rainbow6',
-    'rimworld',
-    'destiny',
-];
+const INDEX_INTERVAL = 10;
+const SERVICE_ACCOUNT_CHUNK_CUTOFF = 20;
 
-const INDEX_INTERVAL = 6;
+// eslint-disable-next-line no-sync
+const gameData = JSON.parse( fs.readFileSync( path.join( __dirname, '../config/games.json' ), 'utf-8' ) );
 
-console.log( `Indexer starting for ${ games.join( ', ' ) }` );
 console.time( 'Indexer' );
 
 process.on( 'exit', () => {
@@ -40,119 +32,169 @@ const chunk = function chunk ( arr, len ) {
     return chunks;
 };
 
-const storePosts = async function storePosts ( posts, databasePath, filterData ) {
-    for ( let i = 0; i < posts.length; i = i + 1 ) {
-        await posts[ i ].save( databasePath, filterData )
-            .catch( ( error ) => {
-                console.log( error );
-            } );
-    }
-};
+const indexGame = function indexGame ( game ) {
+    return new Promise( ( resolve, reject ) => {
+        const configuredServices = {};
+        const {
+            identifier,
+            ...servicesConfig
+        } = game;
 
-const run = function run () {
-    for ( let gameIndex = 0; gameIndex < games.length; gameIndex = gameIndex + 1 ) {
-        const databasePath = path.join( __dirname, `../../dev-tracker/dist/${ games[ gameIndex ] }/data/database.sqlite` );
-        const dataPath = path.join( __dirname, `../../dev-tracker/games/${ games[ gameIndex ] }/data.json` );
-        const database = new sqlite3.Database( databasePath );
+        for ( const serviceIdentifier in servicesConfig ) {
+            let indexerClass = serviceIdentifier;
 
-        // eslint-disable-next-line no-sync
-        const gameData = JSON.parse( fs.readFileSync( dataPath, 'utf-8' ) );
-
-        database.all( `SELECT
-                developers.id,
-                accounts.uid,
-                accounts.identifier,
-                accounts.service,
-                developers.active
-            FROM
-                developers,
-                accounts
-            WHERE
-                developers.active = 1
-            AND
-                developers.id = accounts.uid`, ( error, developers ) => {
-            if ( error ) {
-                throw error;
+            if ( servicesConfig[ serviceIdentifier ].type ) {
+                indexerClass = servicesConfig[ serviceIdentifier ].type.replace( /\s/g, '' );
             }
 
-            database.all( 'SELECT url FROM posts', ( postsError, postRows ) => {
-                if ( postsError ) {
-                    throw postsError;
-                }
-
-                const urlList = [];
-                const developersByService = {};
-
-                for ( let i = 0; i < postRows.length; i = i + 1 ) {
-                    urlList.push( postRows[ i ].url );
-                }
-
-                for ( let i = 0; i < developers.length; i = i + 1 ) {
-                    if ( !Indexers[ developers[ i ].service ] ) {
-                        // console.log( `Found no indexer for ${ developers[ i ].service }, skipping ` );
-                        continue;
-                    }
-
-                    if ( !developersByService[ developers[ i ].service ] ) {
-                        developersByService[ developers[ i ].service ] = [];
-                    }
-
-                    developersByService[ developers[ i ].service ].push( developers[ i ] );
-                }
-
-                for ( const service in developersByService ) {
-                    let developerList = developersByService[ service ];
-
-                    if ( service === 'Reddit' ) {
-                        const developerChunks = chunk( developersByService[ service ], Math.ceil( developersByService[ service ].length / INDEX_INTERVAL ) );
-
-                        developerList = developerChunks[ new Date().getMinutes() % INDEX_INTERVAL ];
-                    }
-
-                    // We don't have any developers for this specific minute
-                    if ( !developerList ) {
-                        continue;
-                    }
-
-                    // console.log( `Loading ${ developerList.length } developers on ${ service } for ${ games[ gameIndex ] }` );
-                    console.time( `${ games[ gameIndex ] }-${ service }` );
-
-                    const indexerPromises = [];
-
-                    for ( let i = 0; i < developerList.length; i = i + 1 ) {
-                        const promise = Indexers[ service ].loadRecentPosts( developerList[ i ].uid, developerList[ i ].identifier, urlList )
-                            .then( ( posts ) => {
-                                const filter = gameData.config[ service ] || false;
-
-                                if ( posts ) {
-                                    storePosts( posts, databasePath, filter );
-                                }
-
-                                return true;
-                            } )
-                            .catch( ( loadPostsError ) => {
-                                console.log( loadPostsError );
-
-                                return false;
-                            } );
-
-                        indexerPromises.push( promise );
-                    }
-
-                    Promise.all( indexerPromises )
-                        .then( () => {
-                            console.log( service, Indexers[ service ].load );
-                            console.timeEnd( `${ games[ gameIndex ] }-${ service }` );
-                        } )
-                        .catch( ( indexerError ) => {
-                            throw indexerError;
-                        } );
-                }
+            configuredServices[ serviceIdentifier ] = Object.assign( {}, servicesConfig[ serviceIdentifier ], {
+                indexerType: indexerClass,
             } );
-        } );
+        }
 
-        database.close();
-    }
+        api.get( `/${ game.identifier }/accounts`, {
+            active: 1,
+        } )
+        .then( ( accountResponse ) => {
+            const accounts = accountResponse.data;
+
+            api.get( `/${ game.identifier }/hashes` )
+                .then( ( hashResponse ) => {
+                    const hashes = hashResponse.data;
+                    const serviceConfig = {};
+
+                    for ( let i = 0; i < accounts.length; i = i + 1 ) {
+                        let indexerType = false;
+
+                        if ( configuredServices[ accounts[ i ].service ] && !Indexers[ configuredServices[ accounts[ i ].service ].indexerType ] ) {
+                            console.log( chalk.red( `Found no indexer for "${ accounts[ i ].service }", skipping` ) );
+                            continue;
+                        } else if ( configuredServices[ accounts[ i ].service ] ) {
+                            indexerType = configuredServices[ accounts[ i ].service ].indexerType;
+                        } else if ( !configuredServices[ accounts[ i ].service ] && !Indexers[ accounts[ i ].service ] ) {
+                            console.log( chalk.red( `Found no indexer for "${ accounts[ i ].service }", skipping` ) );
+                            continue;
+                        } else {
+                            indexerType = accounts[ i ].service;
+                        }
+
+                        if ( !serviceConfig[ accounts[ i ].service ] ) {
+                            serviceConfig[ accounts[ i ].service ] = {
+                                developers: [],
+                                indexerType: indexerType,
+                            };
+                        }
+
+                        serviceConfig[ accounts[ i ].service ].developers.push( accounts[ i ] );
+                    }
+
+                    // eslint-disable-next-line guard-for-in
+                    for ( const service in serviceConfig ) {
+                        let developerList = serviceConfig[ service ].developers;
+
+                        if ( developerList.length > SERVICE_ACCOUNT_CHUNK_CUTOFF ) {
+                            const developerChunks = chunk( serviceConfig[ service ].developers, Math.ceil( serviceConfig[ service ].developers.length / INDEX_INTERVAL ) );
+
+                            developerList = developerChunks[ new Date().getMinutes() % INDEX_INTERVAL ];
+                        }
+
+                        // We don't have any developers for this specific minute
+                        if ( !developerList ) {
+                            continue;
+                        }
+
+                        // console.log( `Loading ${ developerList.length } developers on ${ service } for ${ game.identifier }` );
+                        console.time( `${ game.identifier }-${ service }` );
+
+                        const indexerPromises = [];
+
+                        for ( let i = 0; i < developerList.length; i = i + 1 ) {
+                            const indexer = new Indexers[ serviceConfig[ service ].indexerType ]( developerList[ i ].identifier, configuredServices[ service ], hashes, load );
+                            const promise = indexer.loadRecentPosts()
+                                .then( ( posts ) => {
+                                    let allowedSections = [];
+
+                                    // console.log( `Got ${ posts.length } valid posts for ${ developerList[ i ].identifier } on ${ service }` )
+
+                                    if ( configuredServices[ service ] && configuredServices[ service ].allowedSections ) {
+                                        allowedSections = configuredServices[ service ].allowedSections;
+                                    }
+
+                                    posts.forEach( ( post ) => {
+                                        post.accountId = developerList[ i ].id;
+                                    } );
+
+                                    if ( !posts || posts.length === 0 ) {
+                                        return false;
+                                    }
+
+                                    for ( let postIndex = 0; postIndex < posts.length; postIndex = postIndex + 1 ) {
+                                        if ( posts[ postIndex ].save ) {
+                                            posts[ postIndex ].save( game.identifier, allowedSections )
+                                                .catch( ( error ) => {
+                                                    console.log( posts[ postIndex ] );
+                                                    console.log( error );
+                                                } );
+                                        } else {
+                                            console.log( posts[ postIndex ] );
+                                            reject( new Error( 'Post is missing save method' ) );
+                                        }
+                                    }
+
+                                    return true;
+                                } )
+                                .catch( ( loadPostsError ) => {
+                                    console.log( loadPostsError );
+
+                                    resolve();
+                                } );
+
+                            indexerPromises.push( promise );
+                        }
+
+                        Promise.all( indexerPromises )
+                            .then( () => {
+                                console.timeEnd( `${ game.identifier }-${ service }` );
+                                resolve();
+                            } )
+                            .catch( ( indexerError ) => {
+                                reject( indexerError );
+                            } );
+                    }
+                } )
+                .catch( ( hashesError ) => {
+                    reject( hashesError );
+                } );
+        } )
+        .catch( ( error ) => {
+            reject( error );
+        } );
+    } );
+};
+
+
+const run = function run () {
+    const gamePromises = [];
+
+    Object.keys( gameData ).forEach( ( gameIdentifier ) => {
+        const currentGameData = Object.assign(
+            {},
+            gameData[ gameIdentifier ],
+            {
+                identifier: gameIdentifier,
+            }
+        );
+
+        gamePromises.push( indexGame( currentGameData ) );
+    } );
+
+    Promise.all( gamePromises )
+        .then( () => {
+            console.log( load );
+        } )
+        .catch( ( error ) => {
+            console.log( error );
+        } );
 };
 
 cache.clean()
@@ -162,3 +204,7 @@ cache.clean()
     .catch( ( error ) => {
         throw error;
     } );
+
+process.on( 'unhandledRejection', ( r ) => {
+    console.log( r );
+} );
