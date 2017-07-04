@@ -113,6 +113,7 @@ class Twitter {
 
     async getTweet ( tweetId ) {
         return await this.load.get( this.singleTweetPath, {
+            isJSON: true,
             namespace: 'https://api.twitter.com/1.1',
             parameters: {
                 id: tweetId,
@@ -140,6 +141,7 @@ class Twitter {
 
     async loadRecentPosts () {
         const tweets = await this.load.get( `${ this.userTweetsPath }`, {
+            isJSON: true,
             namespace: 'https://api.twitter.com/1.1',
             parameters: {
                 count: 50,
