@@ -18,7 +18,16 @@ class RSS {
         parser.on( 'item', ( item ) => {
             const post = new Post();
 
-            post.url = item.link;
+            if ( typeof item.guid === 'object' ) {
+                if ( item.guid.ispermalink ) {
+                    post.url = item.guid.text;
+                }
+            }
+
+            if ( !post.url ) {
+                post.url = item.link;
+            }
+
             post.text = item.description;
             post.timestamp = moment( item.pubdate ).unix();
             post.topicTitle = item.title;
