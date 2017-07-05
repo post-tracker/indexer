@@ -99,13 +99,22 @@ class Load {
     async loadFromUrl ( url, options ) {
         let response = false;
         const cacheKey = this.getCacheKey( url );
+        let headers = {
+            'user-agent': 'web:dev-post-indexer:v1.0.0 (by /u/kokarn)',
+        };
+
+        if ( options.headers ) {
+            headers = Object.assign(
+                {},
+                headers,
+                options.headers
+            );
+        }
 
         try {
             response = await got( url,
                 {
-                    headers: {
-                        'user-agent': 'web:dev-post-indexer:v1.0.0 (by /u/kokarn)',
-                    },
+                    headers: headers,
                 }
             );
         } catch ( urlLoadError ) {
