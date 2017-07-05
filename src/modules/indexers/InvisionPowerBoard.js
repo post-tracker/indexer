@@ -48,10 +48,10 @@ class InvisionPowerBoard {
                         .find( '.ipsStreamItem_snippet' )
                         .html()
                         .trim();
-                    post.timestamp = Date.parse( $element
+                    post.timestamp = Math.floor( Date.parse( $element
                         .find( 'time' )
                         .attr( 'datetime' )
-                    ) / MILLISECONDS_PER_SECOND;
+                    ) / MILLISECONDS_PER_SECOND );
                     post.url = fullUrl;
                     posts.push( post );
                     postResolve();
