@@ -95,7 +95,7 @@ const indexGame = function indexGame ( game ) {
                     for ( const service in serviceConfig ) {
                         let developerList = serviceConfig[ service ].developers;
 
-                        if ( LIMITED_SERVICES.indexOf( service ) && developerList.length > SERVICE_ACCOUNT_CHUNK_CUTOFF ) {
+                        if ( LIMITED_SERVICES.indexOf( service ) > -1 && developerList.length > SERVICE_ACCOUNT_CHUNK_CUTOFF ) {
                             const developerChunks = chunk( serviceConfig[ service ].developers, Math.ceil( serviceConfig[ service ].developers.length / INDEX_INTERVAL ) );
 
                             developerList = developerChunks[ new Date().getMinutes() % INDEX_INTERVAL ];
