@@ -51,6 +51,7 @@ class Load {
                     twitterData = await client.get( url, options.parameters );
                 } catch ( loadingError ) {
                     if ( !loadingError[ 0 ] ) {
+                        console.log( `Failed to load ${ url }` );
                         console.log( loadingError );
 
                         return false;
