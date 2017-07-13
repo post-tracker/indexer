@@ -113,7 +113,7 @@ const indexGame = function indexGame ( game ) {
 
                         for ( let i = 0; i < developerList.length; i = i + 1 ) {
                             if ( !developerList[ i ].identifier || developerList[ i ].identifier.length < 1 ) {
-                                console.error( `Got invalid identifer for ${ game.identifer } ${ service }. Got "${ developerList[ i ].identifer }"` );
+                                console.error( `Got invalid identifer for ${ game.identifier } ${ service }. Got "${ developerList[ i ].identifer }"` );
                                 continue;
                             }
                             const indexer = new Indexers[ serviceConfig[ service ].indexerType ]( developerList[ i ].identifier, configuredServices[ service ], hashes, load );
