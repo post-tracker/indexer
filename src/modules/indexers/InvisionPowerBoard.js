@@ -7,7 +7,7 @@ const MILLISECONDS_PER_SECOND = 1000;
 
 class InvisionPowerBoard {
     constructor ( userId, indexerConfig, hashes, load ) {
-        this.profileBase = '/profile/{{userId}}/content/';
+        this.profileBase = '/profile/{{userId}}/?do=content&type=forums_topic_post&change_section=1';
 
         this.endpoint = indexerConfig.endpoint;
         this.userId = userId;
@@ -25,11 +25,11 @@ class InvisionPowerBoard {
 
             const postPromises = [];
 
-            $( 'div.ipsStreamItem_container' ).each( ( index, element ) => {
+            $( 'article.ipsComment' ).each( ( index, element ) => {
                 postPromises.push( new Promise( ( postResolve ) => {
                     const post = new Post();
                     const $element = $( element );
-                    const $title = $element.find( 'h2' ).first();
+                    const $title = $element.find( 'h3' ).first();
                     const fullUrl = $title
                         .find( 'a' )
                         .attr( 'href' );
@@ -45,7 +45,7 @@ class InvisionPowerBoard {
                         .trim();
                     post.topicUrl = fullUrl.substr( 0, fullUrl.lastIndexOf( '/' ) + 1 );
                     post.text = $element
-                        .find( '.ipsStreamItem_snippet' )
+                        .find( '.ipsType_richText' )
                         .html()
                         .trim();
                     post.timestamp = Math.floor( Date.parse( $element
