@@ -10,6 +10,9 @@ const load = require( './modules/load.js' );
 
 const INDEX_INTERVAL = 10;
 const SERVICE_ACCOUNT_CHUNK_CUTOFF = 20;
+const LIMITED_SERVICES = [
+    'Reddit',
+];
 
 // eslint-disable-next-line no-sync
 const gameData = JSON.parse( fs.readFileSync( path.join( __dirname, '../config/games.json' ), 'utf-8' ) );
@@ -92,7 +95,7 @@ const indexGame = function indexGame ( game ) {
                     for ( const service in serviceConfig ) {
                         let developerList = serviceConfig[ service ].developers;
 
-                        if ( developerList.length > SERVICE_ACCOUNT_CHUNK_CUTOFF ) {
+                        if ( LIMITED_SERVICES.indexOf( service ) && developerList.length > SERVICE_ACCOUNT_CHUNK_CUTOFF ) {
                             const developerChunks = chunk( serviceConfig[ service ].developers, Math.ceil( serviceConfig[ service ].developers.length / INDEX_INTERVAL ) );
 
                             developerList = developerChunks[ new Date().getMinutes() % INDEX_INTERVAL ];
