@@ -102,7 +102,7 @@ const indexGame = function indexGame ( game ) {
                         }
 
                         // We don't have any developers for this specific minute
-                        if ( !developerList ) {
+                        if ( !developerList || developerList.length < 1 ) {
                             continue;
                         }
 
@@ -112,6 +112,10 @@ const indexGame = function indexGame ( game ) {
                         const indexerPromises = [];
 
                         for ( let i = 0; i < developerList.length; i = i + 1 ) {
+                            if ( !developerList[ i ].identifier || developerList[ i ].identifier.length < 1 ) {
+                                console.error( `Got invalid identifer for ${ game } ${ service }. Got "${ developerList[ i ].identifer }"` );
+                                continue;
+                            }
                             const indexer = new Indexers[ serviceConfig[ service ].indexerType ]( developerList[ i ].identifier, configuredServices[ service ], hashes, load );
                             const promise = indexer.loadRecentPosts()
                                 .then( ( posts ) => {
