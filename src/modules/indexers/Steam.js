@@ -40,7 +40,7 @@ class Steam {
             if ( post.timestamp.indexOf( 'Just now' ) > -1 ) {
                 post.timestamp = moment().unix();
             } else if ( post.timestamp.indexOf( 'ago' ) > -1 ) {
-                const numberOffset = post.timestamp.match( /\d+/g )[ 1 ];
+                const numberOffset = post.timestamp.match( /\d+/g )[ 0 ];
 
                 if ( post.timestamp.indexOf( 'hour' ) > -1 ) {
                     post.timestamp = moment()
