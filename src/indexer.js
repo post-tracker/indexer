@@ -120,11 +120,16 @@ const indexGame = function indexGame ( game ) {
                             const promise = indexer.loadRecentPosts()
                                 .then( ( posts ) => {
                                     let allowedSections = [];
+                                    let disallowedSections = [];
 
                                     // console.log( `Got ${ posts.length } valid posts for ${ developerList[ i ].identifier } on ${ service }` )
 
                                     if ( configuredServices[ service ] && configuredServices[ service ].allowedSections ) {
                                         allowedSections = configuredServices[ service ].allowedSections;
+                                    }
+
+                                    if ( configuredServices[ service ] && configuredServices[ service ].disallowedSections ) {
+                                        disallowedSections = configuredServices[ service ].disallowedSections;
                                     }
 
                                     posts.forEach( ( post ) => {
@@ -137,7 +142,7 @@ const indexGame = function indexGame ( game ) {
 
                                     for ( let postIndex = 0; postIndex < posts.length; postIndex = postIndex + 1 ) {
                                         if ( posts[ postIndex ].save ) {
-                                            posts[ postIndex ].save( game.identifier, allowedSections )
+                                            posts[ postIndex ].save( game.identifier, allowedSections, disallowedSections )
                                                 .catch( ( error ) => {
                                                     console.log( posts[ postIndex ] );
                                                     console.log( error );

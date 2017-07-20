@@ -1,7 +1,7 @@
 const api = require( './api.js' );
 
 class Post {
-    isValid ( allowedSections ) {
+    isValid ( allowedSections, disallowedSections ) {
         if ( !this.text ) {
             console.error( 'Post has no text' );
 
@@ -28,12 +28,20 @@ class Post {
             }
         }
 
+        if ( disallowedSections && disallowedSections.length > 0 ) {
+            if ( disallowedSections.indexOf( this.section ) > -1 ) {
+                // console.error( `Post is in an disallowed section (${ this.section })` );
+
+                return false;
+            }
+        }
+
         return true;
     }
 
-    async save ( game, allowedSections ) {
+    async save ( game, allowedSections, disallowedSections ) {
         return new Promise( ( resolve, reject ) => {
-            if ( !this.isValid( allowedSections ) ) {
+            if ( !this.isValid( allowedSections, disallowedSections ) ) {
                 resolve();
 
                 return false;
