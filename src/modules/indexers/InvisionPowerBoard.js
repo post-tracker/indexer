@@ -23,50 +23,41 @@ class InvisionPowerBoard {
             const $ = cheerio.load( page );
             const posts = [];
 
-            const postPromises = [];
-
             $( 'article.ipsComment' ).each( ( index, element ) => {
-                postPromises.push( new Promise( ( postResolve ) => {
-                    const post = new Post();
-                    const $element = $( element );
-                    const $title = $element.find( 'h3' ).first();
-                    const fullUrl = $title
-                        .find( 'a' )
-                        .attr( 'href' );
+                const post = new Post();
+                const $element = $( element );
+                const $title = $element.find( 'h3' ).first();
+                const fullUrl = $title
+                    .find( 'a' )
+                    .attr( 'href' );
 
-                    if ( this.postHashes.includes( sha1( fullUrl ) ) ) {
-                        postResolve();
+                if ( this.postHashes.includes( sha1( fullUrl ) ) ) {
+                    return false;
+                }
 
-                        return false;
-                    }
+                post.section = $element
+                    .find( 'p.ipsType_normal a' )
+                    .text()
+                    .trim();
+                post.topicTitle = $title
+                    .text()
+                    .trim();
+                post.topicUrl = fullUrl.substr( 0, fullUrl.lastIndexOf( '/' ) + 1 );
+                post.text = $element
+                    .find( '.ipsType_richText' )
+                    .html()
+                    .trim();
+                post.timestamp = Math.floor( Date.parse( $element
+                    .find( 'time' )
+                    .attr( 'datetime' )
+                ) / MILLISECONDS_PER_SECOND );
+                post.url = fullUrl;
+                posts.push( post );
 
-                    post.topicTitle = $title
-                        .text()
-                        .trim();
-                    post.topicUrl = fullUrl.substr( 0, fullUrl.lastIndexOf( '/' ) + 1 );
-                    post.text = $element
-                        .find( '.ipsType_richText' )
-                        .html()
-                        .trim();
-                    post.timestamp = Math.floor( Date.parse( $element
-                        .find( 'time' )
-                        .attr( 'datetime' )
-                    ) / MILLISECONDS_PER_SECOND );
-                    post.url = fullUrl;
-                    posts.push( post );
-                    postResolve();
-
-                    return true;
-                } ) );
+                return true;
             } );
 
-            Promise.all( postPromises )
-                .then( () => {
-                    resolve( posts );
-                } )
-                .catch( ( error ) => {
-                    reject( error );
-                } );
+            resolve( posts );
         } );
     }
 }
