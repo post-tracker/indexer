@@ -2,12 +2,10 @@
   "name": "indexer",
   "version": "1.1.0",
   "description": "",
-  "main": "dist/indexer.js",
+  "main": "indexer.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "start": "node dist/indexer.js",
-    "build": "babel src -d dist && node dist/setup.js",
-    "watch": "babel --watch src -d dist",
+    "start": "node indexer.js",
     "pretest": "eslint src/**/*.js"
   },
   "engines": {
@@ -24,8 +22,6 @@
   },
   "homepage": "https://github.com/post-tracker/indexer#readme",
   "dependencies": {
-    "babel-plugin-transform-async-to-generator": "^6.8.0",
-    "babel-plugin-transform-object-rest-spread": "^6.26.0",
     "chalk": "^2.3.0",
     "cheerio": "^1.0.0-rc.2",
     "feedme": "^1.1.0",
@@ -39,15 +35,8 @@
     "twitter": "^1.7.1"
   },
   "devDependencies": {
-    "babel-cli": "^6.26.0",
     "eslint": "^4.13.1",
     "eslint-config-kokarn": "^3.0.2"
-  },
-  "babel": {
-    "plugins": [
-      "transform-async-to-generator",
-      "transform-object-rest-spread"
-    ]
   },
   "eslintConfig": {
     "extends": "kokarn/nodejs",
