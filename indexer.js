@@ -12,7 +12,7 @@ const load = require( './modules/load.js' );
 const POST_LOOKBACK = 2;
 
 // eslint-disable-next-line no-sync
-const gameData = JSON.parse( fs.readFileSync( path.join( __dirname, '../config/games.json' ), 'utf-8' ) );
+const gameData = JSON.parse( fs.readFileSync( path.join( __dirname, './config/games.json' ), 'utf-8' ) );
 
 console.time( 'Indexer' );
 

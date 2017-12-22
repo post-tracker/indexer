@@ -9,7 +9,7 @@ let config = false;
 
 try {
     // eslint-disable-next-line global-require
-    config = require( path.join( __dirname, '../../config/config.json' ) );
+    config = require( path.join( __dirname, '../config/config.json' ) );
 } catch ( configLoadError ) {
     console.error( 'Unable to find load module config file, starting without' );
 }

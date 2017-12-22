@@ -14,7 +14,7 @@ const SUCESS_STATUS_CODE = 200;
 const EXISTS_STATUS_CODE = 200;
 
 // eslint-disable-next-line no-sync
-const config = JSON.parse( fs.readFileSync( path.join( __dirname, '../../config/config.json' ), 'utf-8' ) );
+const config = JSON.parse( fs.readFileSync( path.join( __dirname, '../config/config.json' ), 'utf-8' ) );
 const API_TOKEN = config.apiToken;
 
 if ( !API_TOKEN ) {
