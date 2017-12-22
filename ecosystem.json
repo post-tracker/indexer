@@ -2,8 +2,7 @@
     "apps": [
         {
             "name": "indexer",
-            "script": "dist/indexer.js",
-            "node-args": "--max-old-space-size=512",
+            "script": "indexer.js",
             "env": {
                 "NODE_ENV": "production"
             },
