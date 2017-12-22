@@ -21,6 +21,10 @@ class RSS {
             console.error( pageLoadError );
         }
 
+        if ( !posts ) {
+            return false;
+        }
+
         parser.on( 'item', ( item ) => {
             const post = new Post();
 

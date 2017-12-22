@@ -7,36 +7,34 @@ class MiggyRSS extends RSS {
         this.userId = userId;
     }
 
-    loadRecentPosts () {
-        return new Promise( ( resolve, reject ) => {
-            super.loadRecentPosts()
-                .then( ( posts ) => {
-                    const validPosts = [];
+    async loadRecentPosts () {
+        let posts = false;
 
-                    for ( let i = 0; i < posts.length; i = i + 1 ) {
-                        const [ , username, topicTitle ] = posts[ i ].topicTitle.match( /^(.+?) - (.*)/ );
-                        const [ , topicUrl ] = posts[ i ].url.match( /^(.+?)(\?p|$)/ );
+        try {
+            posts = await super.loadRecentPosts();
+        } catch ( postLoadError ) {
+            console.error( postLoadError );
+        }
 
-                        if ( username !== this.userId ) {
-                            continue;
-                        }
+        const validPosts = [];
 
-                        posts[ i ].topicTitle = topicTitle;
-                        posts[ i ].topicUrl = topicUrl;
+        for ( let i = 0; i < posts.length; i = i + 1 ) {
+            const [ , username, topicTitle ] = posts[ i ].topicTitle.match( /^(.+?) - (.*)/ );
+            const [ , topicUrl ] = posts[ i ].url.match( /^(.+?)(\?p|$)/ );
 
-                        posts[ i ].text = posts[ i ].text.replace( /<a href=".+?">see more<\/a>/, '' ).trim();
+            if ( username !== this.userId ) {
+                continue;
+            }
 
-                        validPosts.push( posts[ i ] );
-                    }
+            posts[ i ].topicTitle = topicTitle;
+            posts[ i ].topicUrl = topicUrl;
 
-                    resolve( validPosts );
-                } )
-                .catch( ( error ) => {
-                    reject( error );
+            posts[ i ].text = posts[ i ].text.replace( /<a href=".+?">see more<\/a>/, '' ).trim();
 
-                    return false;
-                } );
-        } );
+            validPosts.push( posts[ i ] );
+        }
+
+        return validPosts;
     }
 }
 
