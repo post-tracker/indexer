@@ -16,12 +16,6 @@ const gameData = JSON.parse( fs.readFileSync( path.join( __dirname, './config/ga
 
 console.time( 'Indexer' );
 
-process.on( 'exit', () => {
-    console.log( load );
-    console.log( counters );
-    console.timeEnd( 'Indexer' );
-} );
-
 const counters = {
     accounts: 0,
     checked: 0,
@@ -192,6 +186,11 @@ const run = function run () {
     } );
 
     Promise.all( gamePromises )
+        .then( () => {
+            console.log( load );
+            console.log( counters );
+            console.timeEnd( 'Indexer' );
+        } )
         .catch( ( someError ) => {
             console.error( someError );
         } );
