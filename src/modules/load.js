@@ -126,6 +126,7 @@ class Load {
             response = await got( url,
                 {
                     headers: headers,
+                    timeout: 10000,
                 }
             );
         } catch ( urlLoadError ) {
