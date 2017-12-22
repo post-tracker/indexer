@@ -4,14 +4,13 @@ const sha1 = require( 'sha1' );
 const Post = require( '../Post.js' );
 
 class Twitter {
-    constructor ( userId, indexerConfig, hashes, load ) {
+    constructor ( userId, indexerConfig, load ) {
         this.apiPath = 'https://api.twitter.com/1.1';
         this.userTweetsPath = '/statuses/user_timeline';
         this.singleTweetPath = '/statuses/show';
 
         this.postList = [];
 
-        this.postHashes = hashes;
         this.userId = userId;
         this.load = load;
 
@@ -102,7 +101,13 @@ class Twitter {
     }
 
     async getParentTweet ( tweetId ) {
-        const parentTweetData = await this.getTweet( tweetId );
+        let parentTweetData = false;
+
+        try {
+            parentTweetData = await this.getTweet( tweetId );
+        } catch ( parentLoadError ) {
+            console.error( parentLoadError );
+        }
 
         if ( !parentTweetData ) {
             return false;
@@ -112,17 +117,25 @@ class Twitter {
     }
 
     async getTweet ( tweetId ) {
-        return await this.load.get( this.singleTweetPath, {
-            isJSON: true,
-            namespace: 'https://api.twitter.com/1.1',
-            parameters: {
-                id: tweetId,
-                // eslint-disable-next-line camelcase
-                tweet_mode: 'extended',
-            },
-            permanent: true,
-            provider: 'Twitter',
-        } );
+        let tweetData = false;
+
+        try {
+            tweetData = await this.load.get( this.singleTweetPath, {
+                isJSON: true,
+                namespace: 'https://api.twitter.com/1.1',
+                parameters: {
+                    id: tweetId,
+                    // eslint-disable-next-line camelcase
+                    tweet_mode: 'extended',
+                },
+                permanent: true,
+                provider: 'Twitter',
+            } );
+        } catch ( loadError ) {
+            console.error( loadError );
+        }
+
+        return tweetData;
     }
 
     tweetToHTML ( tweet ) {
@@ -140,20 +153,26 @@ class Twitter {
     }
 
     async loadRecentPosts () {
-        const tweets = await this.load.get( `${ this.userTweetsPath }`, {
-            isJSON: true,
-            namespace: 'https://api.twitter.com/1.1',
-            parameters: {
-                count: 50,
-                // eslint-disable-next-line camelcase
-                include_rts: false,
-                // eslint-disable-next-line camelcase
-                screen_name: this.userId,
-                // eslint-disable-next-line camelcase
-                tweet_mode: 'extended',
-            },
-            provider: 'Twitter',
-        } );
+        let tweets = false;
+
+        try {
+            tweets = await this.load.get( `${ this.userTweetsPath }`, {
+                isJSON: true,
+                namespace: 'https://api.twitter.com/1.1',
+                parameters: {
+                    count: 50,
+                    // eslint-disable-next-line camelcase
+                    include_rts: false,
+                    // eslint-disable-next-line camelcase
+                    screen_name: this.userId,
+                    // eslint-disable-next-line camelcase
+                    tweet_mode: 'extended',
+                },
+                provider: 'Twitter',
+            } );
+        } catch ( loadTweetsError ) {
+            console.error( loadTweetsError );
+        }
         const postList = [];
 
         for ( let tweetIndex = 0; tweetIndex < tweets.length; tweetIndex = tweetIndex + 1 ) {
@@ -161,14 +180,22 @@ class Twitter {
 
             post.url = `https://twitter.com/${ tweets[ tweetIndex ].user.screen_name }/status/${ tweets[ tweetIndex ].id_str }/`;
 
-            if ( this.postHashes.indexOf( sha1( post.url ) ) > -1 ) {
-                continue;
-            }
-
             post.text = this.tweetToHTML( tweets[ tweetIndex ] );
 
             if ( tweets[ tweetIndex ].in_reply_to_status_id_str ) {
-                post.text = `${ await this.getParentTweet( tweets[ tweetIndex ].in_reply_to_status_id_str ) }${ post.text }`;
+                let parentPost = false;
+
+                try {
+                    parentPost = await this.getParentTweet( tweets[ tweetIndex ].in_reply_to_status_id_str );
+                } catch ( parentLoadError ) {
+                    console.error( parentLoadError );
+                }
+
+                if ( parentPost === false ) {
+                    continue;
+                }
+
+                post.text = `${ parentPost }${ post.text }`;
             }
 
             post.timestamp = moment( tweets[ tweetIndex ].created_at, 'ddd MMM DD, HH:mm:ss ZZ YYYY' ).unix();

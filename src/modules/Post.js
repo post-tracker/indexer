@@ -1,7 +1,7 @@
 const api = require( './api.js' );
 
 class Post {
-    isValid ( allowedSections, disallowedSections ) {
+    isValid () {
         if ( !this.text ) {
             console.error( 'Post has no text' );
 
@@ -20,16 +20,16 @@ class Post {
             return false;
         }
 
-        if ( allowedSections && allowedSections.length > 0 ) {
-            if ( allowedSections.indexOf( this.section ) === -1 ) {
+        if ( this.allowedSections && this.allowedSections.length > 0 ) {
+            if ( this.allowedSections.indexOf( this.section ) === -1 ) {
                 // console.error( 'Post is not in an allowed section' );
 
                 return false;
             }
         }
 
-        if ( disallowedSections && disallowedSections.length > 0 ) {
-            if ( disallowedSections.indexOf( this.section ) > -1 ) {
+        if ( this.disallowedSections && this.disallowedSections.length > 0 ) {
+            if ( this.disallowedSections.indexOf( this.section ) > -1 ) {
                 // console.error( `Post is in an disallowed section (${ this.section })` );
 
                 return false;
@@ -39,35 +39,22 @@ class Post {
         return true;
     }
 
-    async save ( game, allowedSections, disallowedSections ) {
-        return new Promise( ( resolve, reject ) => {
-            if ( !this.isValid( allowedSections, disallowedSections ) ) {
-                resolve();
+    async save ( game ) {
+        if ( !this.isValid() ) {
+            return false;
+        }
 
-                return false;
-            }
+        const storeObject = {
+            accountId: this.accountId,
+            content: this.text,
+            section: this.section,
+            timestamp: this.timestamp,
+            topic: this.topicTitle,
+            topicUrl: this.topicUrl,
+            url: this.url,
+        };
 
-            const storeObject = {
-                accountId: this.accountId,
-                content: this.text,
-                section: this.section,
-                timestamp: this.timestamp,
-                topic: this.topicTitle,
-                topicUrl: this.topicUrl,
-                url: this.url,
-            };
-
-            api.post( `/${ game }/posts`, storeObject )
-                .then( () => {
-                    // console.log( 'Post saved' );
-                    resolve();
-                } )
-                .catch( ( error ) => {
-                    reject( error );
-                } );
-
-            return true;
-        } );
+        return api.post( `/${ game }/posts`, storeObject );
     }
 }
 

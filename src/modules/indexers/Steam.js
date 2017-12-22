@@ -5,12 +5,10 @@ const sha1 = require( 'sha1' );
 const Post = require( '../Post.js' );
 
 class Steam {
-    constructor ( userIdentifier, providerConfig, hashes, load ) {
+    constructor ( userIdentifier, providerConfig, load ) {
         this.apiBase = 'http://steamcommunity.com';
 
         this.userIdentifier = userIdentifier;
-        this.hashes = hashes;
-
         this.postList = [];
         this.load = load;
     }
@@ -22,7 +20,13 @@ class Steam {
             url = `${ this.apiBase }/profiles/${ this.userIdentifier }/posthistory/`;
         }
 
-        const postsHTML = await this.load.get( url );
+        let postsHTML = false;
+
+        try {
+            postsHTML = await this.load.get( url );
+        } catch ( pageLoadError ) {
+            console.error( pageLoadError );
+        }
         const $ = cheerio.load( postsHTML );
         const posts = [];
 
@@ -72,10 +76,6 @@ class Steam {
                 .attr( 'onclick' )
                 .replace( 'window.location=', '' )
                 .replace( /'/g, '' );
-
-            if ( this.hashes.includes( sha1( post.url ) ) ) {
-                return true;
-            }
 
             post.topicTitle = $post
                 .find( 'a.forum_topic_link' )

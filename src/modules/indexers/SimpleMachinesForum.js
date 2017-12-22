@@ -4,19 +4,24 @@ const moment = require( 'moment' );
 const Post = require( '../Post.js' );
 
 class SimpleMachinesForum {
-    constructor ( userId, indexerConfig, hashes, load ) {
+    constructor ( userId, indexerConfig, load ) {
         this.forumBase = indexerConfig.endpoint;
         this.profileBase = 'index.php?action=profile;area=showposts;u=';
 
         this.postList = [];
-        this.postHashes = hashes;
         this.userId = userId;
         this.load = load;
     }
 
     async loadRecentPosts () {
         const url = `${ this.forumBase }${ this.profileBase }${ this.userId }`;
-        const page = await this.load.get( url );
+        let page = false;
+        
+        try {
+            page = await this.load.get( url );
+        } catch ( pageLoadError ) {
+            console.error( pageLoadError );
+        }
         const $ = cheerio.load( page );
         const posts = [];
 

@@ -1,8 +1,8 @@
 const RSS = require( './RSS.js' );
 
 class MiggyRSS extends RSS {
-    constructor ( userId, indexerConfig, hashes, load ) {
-        super( userId, indexerConfig, hashes, load );
+    constructor ( userId, indexerConfig, load ) {
+        super( userId, indexerConfig, load );
 
         this.userId = userId;
     }

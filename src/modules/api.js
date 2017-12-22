@@ -3,12 +3,15 @@ const querystring = require( 'querystring' );
 const fs = require( 'fs' );
 const path = require( 'path' );
 
+const sha1 = require( 'sha1' );
+
 const API_HOST = 'api.kokarn.com';
 const API_PORT = 443;
 // const API_HOST = 'lvh.me';
 // const API_PORT = 3000;
 
 const SUCESS_STATUS_CODE = 200;
+const EXISTS_STATUS_CODE = 200;
 
 // eslint-disable-next-line no-sync
 const config = JSON.parse( fs.readFileSync( path.join( __dirname, '../../config/config.json' ), 'utf-8' ) );
@@ -107,7 +110,43 @@ const post = function post ( requestPath, item ) {
     } );
 };
 
+const exists = function exists ( url ) {
+    return new Promise( ( resolve, reject ) => {
+        const options = {
+            headers: {
+                Authorization: `Bearer ${ API_TOKEN }`,
+            },
+            hostname: API_HOST,
+            method: 'HEAD',
+            path: `/admin/posts/${ sha1( url ) }`,
+            port: API_PORT,
+            rejectUnauthorized: false,
+        };
+
+        const request = https.request( options, ( response ) => {
+            response.setEncoding( 'utf8' );
+
+            if ( response.statusCode === EXISTS_STATUS_CODE ) {
+                resolve( true );
+
+                return false;
+            }
+
+            resolve( false );
+
+            return true;
+        } );
+
+        request.on( 'error', ( requestError ) => {
+            reject( requestError );
+        } );
+
+        request.end();
+    } );
+};
+
 module.exports = {
+    exists: exists,
     get: get,
     post: post,
 };

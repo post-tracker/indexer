@@ -70,7 +70,11 @@ class Load {
                             // falls through
                         case 179:
                             // unauthorized
-                            await cache.store( cacheKey, false, options.permanent );
+                            try {
+                                await cache.store( cacheKey, false, options.permanent );
+                            } catch ( storeError ) {
+                                console.error( storeError );
+                            }
 
                             break;
                         default:
@@ -85,7 +89,13 @@ class Load {
 
                 this.providers.twitter = this.providers.twitter + 1;
 
-                await cache.store( cacheKey, JSONTwitterData, options.permanent );
+                if ( twitterData !== false ) {
+                    try {
+                        await cache.store( cacheKey, JSONTwitterData, options.permanent );
+                    } catch ( storeError ) {
+                        console.error( storeError );
+                    }
+                }
 
                 return JSONTwitterData;
             }
@@ -126,13 +136,23 @@ class Load {
         }
 
         this.webHits = this.webHits + 1;
-        await cache.store( cacheKey, response.body, options.permanent );
+        try {
+            await cache.store( cacheKey, response.body, options.permanent );
+        } catch ( storeError ) {
+            console.error( storeError );
+        }
 
         return response.body;
     }
 
     async loadFromCache ( key ) {
-        return await cache.get( key );
+        try {
+            return await cache.get( key );
+        } catch ( getError ) {
+            console.error( getError );
+        }
+
+        return false;
     }
 
     getCacheKey ( url, options ) {
@@ -156,7 +176,13 @@ class Load {
         const options = Object.assign( {}, fetchOptions );
         const cacheKey = this.getCacheKey( url, fetchOptions );
 
-        let urlData = await this.loadFromCache( cacheKey );
+        let urlData;
+
+        try {
+            urlData  = await this.loadFromCache( cacheKey );
+        } catch ( cacheLoadError ) {
+            console.error( cacheLoadError );
+        }
 
         if ( urlData ) {
             this.cacheHits = this.cacheHits + 1;
@@ -165,9 +191,17 @@ class Load {
             source = 'web';
 
             if ( options.provider ) {
-                urlData = await this.loadByProvider( url, options );
+                try {
+                    urlData = await this.loadByProvider( url, options );
+                } catch ( loadError ) {
+                    console.error( loadError );
+                }
             } else {
-                urlData = await this.loadFromUrl( url, options );
+                try {
+                    urlData = await this.loadFromUrl( url, options );
+                } catch ( loadError ) {
+                    console.error( loadError );
+                }
             }
         }
 
@@ -184,7 +218,11 @@ class Load {
             return JSON.parse( urlData );
         } catch ( parseError ) {
             console.log( `Failed to parse ${ url } from ${ source }.` );
-            await cache.cleanIndex( cacheKey );
+            try {
+                await cache.cleanIndex( cacheKey );
+            } catch ( cleanError ) {
+                console.error( cleanError );
+            }
 
             return false;
         }

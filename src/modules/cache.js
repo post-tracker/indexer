@@ -86,7 +86,11 @@ class Cache {
             cachePath = path.join( this.permanentCachePath, this.normalizeName( filename ) );
         }
 
-        await fs.writeFile( cachePath, fileData );
+        try {
+            await fs.writeFile( cachePath, fileData );
+        } catch ( writeError ) {
+            console.error( writeError );
+        }
 
         return true;
     }
@@ -109,10 +113,15 @@ class Cache {
 
     async clean ( options ) {
         const currentDate = new Date().getTime();
+        let files;
 
         console.time( 'Cache clean' );
 
-        const files = await fs.readdir( this.cachePath );
+        try {
+            files = await fs.readdir( this.cachePath );
+        } catch ( readError ) {
+            console.error( readError );
+        }
 
         for ( let i = 0; i < files.length; i = i + 1 ) {
             const filePath = path.join( this.cachePath, files[ i ] );
@@ -129,8 +138,13 @@ class Cache {
 
                 continue;
             }
+            let stats;
 
-            const stats = await fs.stat( filePath );
+            try {
+                stats = await fs.stat( filePath );
+            } catch ( statError ) {
+                console.error( statError );
+            }
 
             if ( currentDate - stats.ctime.getTime() > CACHE_TTL ) {
                 fs.unlink( filePath );
@@ -139,6 +153,8 @@ class Cache {
         }
 
         console.timeEnd( 'Cache clean' );
+
+        return true;
     }
 }
 

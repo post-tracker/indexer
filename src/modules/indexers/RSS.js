@@ -4,7 +4,7 @@ const moment = require( 'moment' );
 const Post = require( '../Post.js' );
 
 class RSS {
-    constructor ( userId, indexerConfig, hashes, load ) {
+    constructor ( userId, indexerConfig, load ) {
         this.path = indexerConfig.endpoint;
 
         this.postList = [];
@@ -12,8 +12,14 @@ class RSS {
     }
 
     async loadRecentPosts () {
-        const posts = await this.load.get( this.path );
+        let posts = false;
         const parser = new FeedMe();
+
+        try {
+            posts = await this.load.get( this.path );
+        } catch ( pageLoadError ) {
+            console.error( pageLoadError );
+        }
 
         parser.on( 'item', ( item ) => {
             const post = new Post();

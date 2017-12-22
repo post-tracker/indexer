@@ -28,13 +28,11 @@ try {
 }
 
 class BungieNet {
-    constructor ( userId, indexerConfig, hashes, load ) {
+    constructor ( userId, indexerConfig, load ) {
         this.userActivityUrl = 'https://www.bungie.net/Platform/Activity/User/{userId}/Activities/Forums/?lc=en&fmt=true&lcin=true&currentpage=1&format=0';
         this.threadUrl = 'https://www.bungie.net/platform/forum/GetPostAndParent/{threadId}/?showbanned=0';
 
         this.userId = userId;
-        this.postHashes = hashes;
-
         this.load = load;
     }
 
@@ -109,18 +107,30 @@ class BungieNet {
 
     async loadThread ( threadId ) {
         const threadUrl = `${ this.threadUrl.replace( '{threadId}', threadId ) }`;
-        const page = await this.load.get( threadUrl, {
-            headers: {
-                'X-API-KEY': config.bungienet.apiKey,
-            },
-            isJSON: true,
-        } );
+        let page = false;
+
+        try {
+            page = await this.load.get( threadUrl, {
+                headers: {
+                    'X-API-KEY': config.bungienet.apiKey,
+                },
+                isJSON: true,
+            } );
+        } catch ( pageLoadError ) {
+            console.error( pageLoadError );
+        }
 
         return page;
     }
 
     async getPost ( threadId ) {
-        const threadData = await this.loadThread( threadId );
+        let threadData = false;
+
+        try {
+            threadData = await this.loadThread( threadId );
+        } catch ( threadLoadError ) {
+            console.error( threadLoadError );
+        }
         const post = new Post();
 
         if ( !threadData || !threadData.Response ) {
@@ -141,8 +151,23 @@ class BungieNet {
         const topicData = threadData.Response.results[ 0 ];
         const parentData = threadData.Response.results[ threadData.Response.results.length - 2 ];
         const postData = threadData.Response.results[ threadData.Response.results.length - 1 ];
+        let postContent;
+
+        try {
+            postContent = await this.getPostContent( postData );
+        } catch ( postLoadError ) {
+            console.error( postLoadError );
+        }
 
         if ( threadData.Response.results.length > 1 ) {
+            let parentContent;
+
+            try {
+                parentContent = await this.getPostContent( parentData );
+            } catch ( parentLoadError ) {
+                console.error( parentLoadError );
+            }
+
             post.text = `<blockquote>
                     <div class="quoteauthor">
                         Originally posted by
@@ -152,11 +177,11 @@ class BungieNet {
                             </a>
                         </b>
                     </div>
-                    ${ await this.getPostContent( parentData ) }
+                    ${ parentContent }
                 </blockquote>
-                ${ await this.getPostContent( postData ) }`;
+                ${ postContent }`;
         } else {
-            post.text = await this.getPostContent( postData );
+            post.text = postContent;
         }
 
         post.topicTitle = topicData.subject;
@@ -165,37 +190,46 @@ class BungieNet {
         post.url = this.getFullPostUrl( postData.postId );
 
         return post;
-
-        // if ( this.postHashes.includes( sha1( fullUrl ) ) ) {
-        //     postResolve();
-        //
-        //     return false;
-        // }
     }
 
-    loadRecentPosts () {
-        return new Promise( async ( resolve ) => {
-            const activityUrl = `${ this.userActivityUrl.replace( '{userId}', this.userId ) }`;
-            const activities = await this.load.get( activityUrl, {
+    async loadRecentPosts () {
+        const activityUrl = `${ this.userActivityUrl.replace( '{userId}', this.userId ) }`;
+        let activities;
+
+        try {
+            activities = await this.load.get( activityUrl, {
                 headers: {
                     'X-API-KEY': config.bungienet.apiKey,
                 },
                 isJSON: true,
             } );
-            const posts = [];
+        } catch ( activitiesError ) {
+            console.error( activitiesError );
+        }
 
-            for ( let i = 0; i < activities.Response.results.length; i = i + 1 ) {
-                const currentActivity = activities.Response.results[ i ].activity;
-                const post = await this.getPost( currentActivity.relatedItemId );
+        const posts = [];
 
-                if ( post ) {
-                    // console.log( post );
-                    posts.push( post );
-                }
+        if ( activities.ErrorCode > 1 ) {
+            throw new Error( `Failed for user ${ this.userId } ${ activityUrl } - ${ activities.Message }` );
+        }
+
+        for ( let i = 0; i < activities.Response.results.length; i = i + 1 ) {
+            const currentActivity = activities.Response.results[ i ].activity;
+            let post = false;
+
+            try {
+                post = await this.getPost( currentActivity.relatedItemId );
+            } catch ( getPostError ) {
+                console.error( getPostError );
             }
 
-            resolve( posts );
-        } );
+            if ( post ) {
+                // console.log( post );
+                posts.push( post );
+            }
+        }
+
+        return posts;
     }
 }
 
