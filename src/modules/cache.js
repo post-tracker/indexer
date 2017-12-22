@@ -3,7 +3,7 @@ const path = require( 'path' );
 
 const PERMANENT_CACHE_FOLDER_NAME = 'perm';
 const CACHE_PATH = '../cache';
-const CACHE_TTL = 300000;
+const CACHE_TTL = 60000;
 
 class Cache {
     constructor () {
