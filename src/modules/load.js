@@ -130,7 +130,11 @@ class Load {
                 }
             );
         } catch ( urlLoadError ) {
-            console.log( `${ url } returned ${ urlLoadError.statusCode }` );
+            if ( typeof urlLoadError.code === 'undefined' ) {
+                console.error( urlLoadError );
+            } else {
+                console.error( `${ url } failed with ${ urlLoadError.code }` );
+            }
             this.fails = this.fails + 1;
 
             return false;

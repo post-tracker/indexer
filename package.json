@@ -25,23 +25,23 @@
   "homepage": "https://github.com/post-tracker/indexer#readme",
   "dependencies": {
     "babel-plugin-transform-async-to-generator": "^6.8.0",
-    "babel-plugin-transform-object-rest-spread": "^6.23.0",
-    "chalk": "^2.0.1",
-    "cheerio": "^1.0.0-rc.1",
-    "feedme": "^1.0.0",
-    "got": "^6.7.1",
+    "babel-plugin-transform-object-rest-spread": "^6.26.0",
+    "chalk": "^2.3.0",
+    "cheerio": "^1.0.0-rc.2",
+    "feedme": "^1.1.0",
+    "got": "^8.0.1",
     "html-entities": "^1.2.1",
     "image-type": "^3.0.0",
-    "moment": "^2.18.1",
-    "mz": "^2.6.0",
+    "moment": "^2.20.1",
+    "mz": "^2.7.0",
     "p-finally": "^1.0.0",
     "sha1": "^1.1.1",
-    "twitter": "^1.7.0"
+    "twitter": "^1.7.1"
   },
   "devDependencies": {
-    "babel-cli": "^6.9.0",
-    "eslint": "^3.13.1",
-    "eslint-config-kokarn": "^2.0.0"
+    "babel-cli": "^6.26.0",
+    "eslint": "^4.13.1",
+    "eslint-config-kokarn": "^3.0.2"
   },
   "babel": {
     "plugins": [

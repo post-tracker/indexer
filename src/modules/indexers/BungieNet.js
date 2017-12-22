@@ -209,6 +209,10 @@ class BungieNet {
 
         const posts = [];
 
+        if ( !activities ) {
+            return posts;
+        }
+
         if ( activities.ErrorCode > 1 ) {
             throw new Error( `Failed for user ${ this.userId } ${ activityUrl } - ${ activities.Message }` );
         }
@@ -224,7 +228,6 @@ class BungieNet {
             }
 
             if ( post ) {
-                // console.log( post );
                 posts.push( post );
             }
         }
