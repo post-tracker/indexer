@@ -9,6 +9,7 @@ const API_HOST = 'api.kokarn.com';
 const API_PORT = 443;
 // const API_HOST = 'lvh.me';
 // const API_PORT = 3000;
+const EXISTS_API_HOST = 'api.developertracker.com';
 
 const SUCESS_STATUS_CODE = 200;
 const EXISTS_STATUS_CODE = 200;
@@ -113,10 +114,7 @@ const post = function post ( requestPath, item ) {
 const exists = function exists ( url ) {
     return new Promise( ( resolve, reject ) => {
         const options = {
-            headers: {
-                Authorization: `Bearer ${ API_TOKEN }`,
-            },
-            hostname: API_HOST,
+            hostname: EXISTS_API_HOST,
             method: 'HEAD',
             path: `/admin/posts/${ sha1( url ) }`,
             port: API_PORT,
