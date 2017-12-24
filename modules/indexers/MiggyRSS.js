@@ -19,13 +19,14 @@ class MiggyRSS extends RSS {
         const validPosts = [];
 
         for ( let i = 0; i < posts.length; i = i + 1 ) {
-            const [ , username, topicTitle ] = posts[ i ].topicTitle.match( /^(.+?) - (.*)/ );
+            const [ , username, topicTitle, section ] = posts[ i ].topicTitle.match( /(.+?) - (.+?) \((.+?)\)/ );
             const [ , topicUrl ] = posts[ i ].url.match( /^(.+?)(\?p|$)/ );
 
             if ( username !== this.userId ) {
                 continue;
             }
 
+            posts[ i ].section = section;
             posts[ i ].topicTitle = topicTitle;
             posts[ i ].topicUrl = topicUrl;
 

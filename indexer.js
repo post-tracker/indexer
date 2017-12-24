@@ -45,12 +45,9 @@ const indexService = function indexService ( serviceConfig, serviceOptions, game
                 } );
 
                 counters.started = counters.started + 1;
-
                 counters.posts = counters.posts + posts.length;
 
-
                 if ( !posts || posts.length === 0 ) {
-
                     return false;
                 }
 
