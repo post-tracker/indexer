@@ -11,9 +11,6 @@ const load = require( './modules/load.js' );
 
 const POST_LOOKBACK = 2;
 
-// eslint-disable-next-line no-sync
-const gameData = JSON.parse( fs.readFileSync( path.join( __dirname, './config/games.json' ), 'utf-8' ) );
-
 console.time( 'Indexer' );
 
 const counters = {
@@ -169,27 +166,35 @@ const indexGame = function indexGame ( game ) {
 
 const run = function run () {
     const gamePromises = [];
+    const indexerConfigs = [];
 
-    Object.keys( gameData ).forEach( ( gameIdentifier ) => {
-        const currentGameData = Object.assign(
-            {},
-            gameData[ gameIdentifier ],
-            {
-                identifier: gameIdentifier,
-            }
-        );
+    api.get( '/games' )
+        .then( ( gameData ) => {
+            gameData.data.forEach( ( gameConfig ) => {
+                if ( gameConfig.config && gameConfig.config.sources ) {
+                    indexerConfigs.push( Object.assign(
+                        {},
+                        gameConfig.config.sources,
+                        {
+                            identifier: gameConfig.identifier,
+                        }
+                    ) );
+                }
+            } );
 
-        gamePromises.push( pFinally( indexGame( currentGameData ) ) );
-    } );
+            indexerConfigs.forEach( ( currentGameData ) => {
+                gamePromises.push( pFinally( indexGame( currentGameData ) ) );
+            } );
 
-    Promise.all( gamePromises )
-        .then( () => {
-            console.log( load );
-            console.log( counters );
-            console.timeEnd( 'Indexer' );
-        } )
-        .catch( ( someError ) => {
-            console.error( someError );
+            Promise.all( gamePromises )
+                .then( () => {
+                    console.log( load );
+                    console.log( counters );
+                    console.timeEnd( 'Indexer' );
+                } )
+                .catch( ( someError ) => {
+                    console.error( someError );
+                } );
         } );
 };
 
