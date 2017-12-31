@@ -78,8 +78,9 @@ class Load {
 
                             break;
                         default:
-                            console.error( url, options, loadingError );
-                            // console.error( loadingError[ 0 ].code, loadingError[ 0 ].message );
+                            console.error( url );
+                            console.error( options );
+                            console.error( loadingError[ 0 ].code, loadingError[ 0 ].message );
                     }
 
                     return false;
