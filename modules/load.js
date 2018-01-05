@@ -111,25 +111,23 @@ class Load {
     async loadFromUrl ( url, options ) {
         let response = false;
         const cacheKey = this.getCacheKey( url );
-        let headers = {
-            'user-agent': 'web:dev-post-indexer:v1.0.0 (by /u/kokarn)',
+        const requestOptions = {
+            headers: {
+                'user-agent': 'web:dev-post-indexer:v1.0.0 (by /u/kokarn)',
+            },
+            timeout: 20000,
         };
 
         if ( options.headers ) {
-            headers = Object.assign(
+            requestOptions.headers = Object.assign(
                 {},
-                headers,
+                requestOptions.headers,
                 options.headers
             );
         }
 
         try {
-            response = await got( url,
-                {
-                    headers: headers,
-                    timeout: 20000,
-                }
-            );
+            response = await got( url, requestOptions );
         } catch ( urlLoadError ) {
             if ( typeof urlLoadError.code === 'undefined' ) {
                 console.error( urlLoadError );
