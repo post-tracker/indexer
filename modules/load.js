@@ -126,6 +126,10 @@ class Load {
             );
         }
 
+        if ( options.body ) {
+            requestOptions.body = options.body;
+        }
+
         try {
             response = await got( url, requestOptions );
         } catch ( urlLoadError ) {
