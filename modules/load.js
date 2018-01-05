@@ -110,7 +110,7 @@ class Load {
 
     async loadFromUrl ( url, options ) {
         let response = false;
-        const cacheKey = this.getCacheKey( url );
+        const cacheKey = this.getCacheKey( url, options );
         const requestOptions = {
             headers: {
                 'user-agent': 'web:dev-post-indexer:v1.0.0 (by /u/kokarn)',
