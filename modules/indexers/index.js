@@ -7,4 +7,5 @@ module.exports = {
     SimpleMachinesForum: require( './SimpleMachinesForum.js' ),
     Steam: require( './Steam.js' ),
     Twitter: require( './Twitter.js' ),
+    rsi: require( './rsi.js' ),
 };
