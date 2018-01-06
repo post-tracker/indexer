@@ -131,12 +131,18 @@ class RSI {
         return page;
     }
 
-    getReply ( replies, id ) {
-        for ( let i = 0; i < replies.length; i = i + 1 ) {
-            if ( replies[ i ].id === id ) {
-                return replies[ i ];
+    getReply ( post, id ) {
+        for ( let i = 0; i < post.replies.length; i = i + 1 ) {
+            if ( post.replies[ i ].id === id ) {
+                return post.replies[ i ];
             }
         }
+
+        if ( post.content_reply_id === id ) {
+            return post;
+        }
+
+        console.error( `Unable to load ${ id }` );
 
         return false;
     }
@@ -155,19 +161,19 @@ class RSI {
             post.text = this.buildPost( threadData.data );
             post.timestamp = threadData.data.time_created;
         } else {
-            const devPost = this.getReply( threadData.data.replies, thread.postId );
+            const devPost = this.getReply( threadData.data, thread.postId );
 
             if ( !devPost ) {
-                console.error( `Unable to load ${ thread.postId }, skipping` );
-
                 return false;
             }
 
             let parentData;
 
             if ( devPost.parent_reply_reference ) {
+                let requestData;
+
                 try {
-                    parentData = await this.loadPost( {
+                    requestData = await this.loadPost( {
                         postId: devPost.parent_reply_reference.id,
                         slug: thread.slug,
                     } );
@@ -175,7 +181,7 @@ class RSI {
                     console.error( parentLoadError );
                 }
 
-                parentData = this.getReply( parentData.data.replies, devPost.parent_reply_reference.id );
+                parentData = this.getReply( requestData.data, devPost.parent_reply_reference.id );
             } else {
                 parentData = threadData.data;
             }
@@ -216,7 +222,9 @@ class RSI {
                 isJSON: true,
             } );
 
-            postsHtml = response.data.html;
+            if ( response ) {
+                postsHtml = response.data.html;
+            }
         } catch ( activitiesError ) {
             console.error( activitiesError );
         }
