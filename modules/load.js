@@ -5,14 +5,6 @@ const got = require( 'got' );
 const TwitterAPI = require( 'twitter' );
 
 const cache = require( './cache.js' );
-let config = false;
-
-try {
-    // eslint-disable-next-line global-require
-    config = require( path.join( __dirname, '../config/config.json' ) );
-} catch ( configLoadError ) {
-    console.error( 'Unable to find load module config file, starting without' );
-}
 
 class Load {
     constructor () {
@@ -30,7 +22,7 @@ class Load {
                 const cacheKey = this.getCacheKey( url, options );
                 let twitterData;
 
-                if ( !config.twitter || !config.twitter.bearer_token || !config.twitter.consumer_key || !config.twitter.consumer_secret ) {
+                if (  !process.env.TWITTER_BEARER_TOKEN || !process.env.TWITTER_CONSUMER_KEY || !process.env.TWITTER_CONSUMER_SECRET ) {
                     return false;
                 }
 
@@ -40,11 +32,11 @@ class Load {
 
                 const client = new TwitterAPI( {
                     // eslint-disable-next-line camelcase
-                    bearer_token: config.twitter.bearer_token,
+                    bearer_token: process.env.TWITTER_BEARER_TOKEN,
                     // eslint-disable-next-line camelcase
-                    consumer_key: config.twitter.consumer_key,
+                    consumer_key: process.env.TWITTER_CONSUMER_KEY,
                     // eslint-disable-next-line camelcase
-                    consumer_secret: config.twitter.consumer_secret,
+                    consumer_secret: process.env.TWITTER_CONSUMER_SECRET,
                 } );
 
                 try {

@@ -12,7 +12,6 @@ const BBCode = require( '../BBCode.js' );
 const MILLISECONDS_PER_SECOND = 1000;
 
 const entities = new Entities();
-let config = {};
 
 const ALLOWED_IMAGE_EMBEDS = [
     'gif',
@@ -20,11 +19,9 @@ const ALLOWED_IMAGE_EMBEDS = [
     'png',
 ];
 
-try {
-    // eslint-disable-next-line global-require
-    config = require( path.join( __dirname, '../../config/config.json' ) );
-} catch ( configLoadError ) {
-    console.error( 'Unable to find config file. Unable to load BungieNet posts' );
+if ( !process.env.BUNGIE_NET_API_KEY ) {
+    console.log( 'here' );
+    throw new Error( 'Unable to load Bungie.net API token' );
 }
 
 class BungieNet {
@@ -112,7 +109,7 @@ class BungieNet {
         try {
             page = await this.load.get( threadUrl, {
                 headers: {
-                    'X-API-KEY': config.bungienet.apiKey,
+                    'X-API-KEY': process.env.BUNGIE_NET_API_KEY,
                 },
                 isJSON: true,
             } );
@@ -199,7 +196,7 @@ class BungieNet {
         try {
             activities = await this.load.get( activityUrl, {
                 headers: {
-                    'X-API-KEY': config.bungienet.apiKey,
+                    'X-API-KEY': process.env.BUNGIE_NET_API_KEY,
                 },
                 isJSON: true,
             } );

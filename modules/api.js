@@ -13,11 +13,7 @@ const API_PORT = 443;
 const SUCESS_STATUS_CODE = 200;
 const EXISTS_STATUS_CODE = 200;
 
-// eslint-disable-next-line no-sync
-const config = JSON.parse( fs.readFileSync( path.join( __dirname, '../config/config.json' ), 'utf-8' ) );
-const API_TOKEN = config.apiToken;
-
-if ( !API_TOKEN ) {
+if ( !process.env.API_TOKEN ) {
     throw new Error( 'Unable to load API token' );
 }
 
@@ -25,7 +21,7 @@ const get = function get ( requestPath, queryParams ) {
     return new Promise( ( resolve, reject ) => {
         const options = {
             headers: {
-                Authorization: `Bearer ${ API_TOKEN }`,
+                Authorization: `Bearer ${ process.env.API_TOKEN }`,
             },
             hostname: API_HOST,
             method: 'GET',
@@ -74,7 +70,7 @@ const post = function post ( requestPath, item ) {
         const payload = JSON.stringify( item );
         const options = {
             headers: {
-                Authorization: `Bearer ${ API_TOKEN }`,
+                Authorization: `Bearer ${ process.env.API_TOKEN }`,
                 'Content-Length': Buffer.byteLength( payload ),
                 'Content-Type': 'application/json',
             },

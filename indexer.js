@@ -4,6 +4,8 @@ const path = require( 'path' );
 const chalk = require( 'chalk' );
 const pFinally = require( 'p-finally' );
 
+require( 'dotenv' ).config();
+
 const Indexers = require( './modules/indexers/' );
 const cache = require( './modules/cache.js' );
 const api = require( './modules/api.js' );
