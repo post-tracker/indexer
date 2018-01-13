@@ -12,16 +12,9 @@ const api = require( './modules/api.js' );
 const load = require( './modules/load.js' );
 
 const POST_LOOKBACK = 2;
+const RUN_TIMEOUT = 60000;
 
-console.time( 'Indexer' );
-
-const counters = {
-    accounts: 0,
-    checked: 0,
-    posts: 0,
-    saved: 0,
-    started: 0,
-};
+let counters = {};
 
 const indexService = function indexService ( serviceConfig, serviceOptions, gameIdentifier ) {
     console.time( `${ gameIdentifier }-${ serviceConfig.indexerType }` );
@@ -32,7 +25,6 @@ const indexService = function indexService ( serviceConfig, serviceOptions, game
 
     for ( let i = 0; i < serviceConfig.developers.length; i = i + 1 ) {
         const indexer = new Indexers[ serviceConfig.indexerType ]( serviceConfig.developers[ i ].identifier, serviceOptions, load );
-
 
         indexerPromises.push( pFinally( indexer.loadRecentPosts()
             .then( async ( posts ) => {
@@ -170,6 +162,16 @@ const run = function run () {
     const gamePromises = [];
     const indexerConfigs = [];
 
+    console.time( 'Indexer' );
+
+    counters = {
+        accounts: 0,
+        checked: 0,
+        posts: 0,
+        saved: 0,
+        started: 0,
+    };
+
     api.get( '/games' )
         .then( ( gameData ) => {
             gameData.data.forEach( ( gameConfig ) => {
@@ -200,14 +202,15 @@ const run = function run () {
         } );
 };
 
-cache.clean()
+cache.create()
     .then( () => {
         run();
+        setInterval( run, RUN_TIMEOUT );
     } )
     .catch( ( error ) => {
         throw error;
     } );
 
-process.on( 'unhandledRejection', ( r ) => {
-    console.log( r );
+process.on( 'unhandledRejection', ( unhandledRejection ) => {
+    console.log( unhandledRejection );
 } );

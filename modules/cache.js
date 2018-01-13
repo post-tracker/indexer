@@ -12,37 +12,61 @@ class Cache {
     }
 
     create () {
-        // eslint-disable-next-line no-bitwise
-        fs.access( this.cachePath, fs.constants.R_OK | fs.constants.W_OK, ( cacheFolderPermissionsError ) => {
-            if ( cacheFolderPermissionsError ) {
-                fs.mkdir( this.cachePath, ( cacheCreateError ) => {
-                    if ( cacheCreateError ) {
-                        throw cacheCreateError;
-                    }
+        return new Promise( ( resolve, reject ) => {
+            // eslint-disable-next-line no-bitwise
+            fs.access( this.cachePath, fs.constants.R_OK | fs.constants.W_OK, ( cacheFolderPermissionsError ) => {
+                if ( cacheFolderPermissionsError ) {
+                    fs.mkdir( this.cachePath, ( cacheCreateError ) => {
+                        if ( cacheCreateError ) {
+                            reject( cacheCreateError );
 
+                            return false;
+                        }
+
+                        // eslint-disable-next-line no-bitwise
+                        fs.access( this.permanentCachePath, fs.constants.R_OK | fs.constants.W_OK, ( permanentCacheFolderPermissionsError ) => {
+                            if ( permanentCacheFolderPermissionsError ) {
+                                fs.mkdir( this.permanentCachePath, ( permanentCacheCreateError ) => {
+                                    if ( permanentCacheCreateError ) {
+                                        reject( permanentCacheCreateError );
+
+                                        return false;
+                                    }
+
+                                    resolve();
+
+                                    return true;
+                                } );
+                            }
+
+                            resolve();
+
+                            return true;
+                        } );
+
+                        return true;
+                    } );
+                } else {
                     // eslint-disable-next-line no-bitwise
                     fs.access( this.permanentCachePath, fs.constants.R_OK | fs.constants.W_OK, ( permanentCacheFolderPermissionsError ) => {
                         if ( permanentCacheFolderPermissionsError ) {
                             fs.mkdir( this.permanentCachePath, ( permanentCacheCreateError ) => {
                                 if ( permanentCacheCreateError ) {
-                                    throw permanentCacheCreateError;
+                                    reject(  permanentCacheCreateError );
+
+                                    return false;
                                 }
+
+                                resolve();
+
+                                return true;
                             } );
                         }
+
+                        resolve();
                     } );
-                } );
-            } else {
-                // eslint-disable-next-line no-bitwise
-                fs.access( this.permanentCachePath, fs.constants.R_OK | fs.constants.W_OK, ( permanentCacheFolderPermissionsError ) => {
-                    if ( permanentCacheFolderPermissionsError ) {
-                        fs.mkdir( this.permanentCachePath, ( permanentCacheCreateError ) => {
-                            if ( permanentCacheCreateError ) {
-                                throw permanentCacheCreateError;
-                            }
-                        } );
-                    }
-                } );
-            }
+                }
+            } );
         } );
     }
 
