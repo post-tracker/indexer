@@ -172,6 +172,8 @@ const run = function run () {
         started: 0,
     };
 
+    load.resetStats();
+
     api.get( '/games' )
         .then( ( gameData ) => {
             gameData.data.forEach( ( gameConfig ) => {

@@ -8,6 +8,10 @@ const cache = require( './cache.js' );
 
 class Load {
     constructor () {
+        this.resetStats();
+    }
+
+    resetStats () {
         this.webHits = 0;
         this.cacheHits = 0;
         this.providers = {
