@@ -1,5 +1,4 @@
 const querystring = require( 'querystring' );
-const path = require( 'path' );
 
 const got = require( 'got' );
 const TwitterAPI = require( 'twitter' );

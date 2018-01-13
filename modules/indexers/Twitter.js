@@ -1,5 +1,4 @@
 const moment = require( 'moment' );
-const sha1 = require( 'sha1' );
 
 const Post = require( '../Post.js' );
 

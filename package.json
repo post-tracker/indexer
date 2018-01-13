@@ -22,7 +22,6 @@
   },
   "homepage": "https://github.com/post-tracker/indexer#readme",
   "dependencies": {
-    "chalk": "^2.3.0",
     "cheerio": "^1.0.0-rc.2",
     "dotenv": "^4.0.0",
     "feedme": "^1.1.0",

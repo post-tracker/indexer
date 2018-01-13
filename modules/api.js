@@ -1,7 +1,5 @@
 const https = require( 'https' );
 const querystring = require( 'querystring' );
-const fs = require( 'fs' );
-const path = require( 'path' );
 
 const sha1 = require( 'sha1' );
 
