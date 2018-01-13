@@ -96,7 +96,7 @@ class Steam {
             let sectionUrlMatches = forumLink.match( /steamcommunity\.com\/app\/(\d*)\/discussions\/\d+\//i );
 
             if ( !sectionUrlMatches || !sectionUrlMatches[ 1 ] ) {
-                sectionUrlMatches = forumLink.match( /steamcommunity\.com\/workshop\/discussions\/\?appid=(\d*)/i );
+                sectionUrlMatches = forumLink.match( /steamcommunity\.com\/workshop\/discussions\/.*\?appid=(\d*)/i );
             }
 
             if ( !sectionUrlMatches || !sectionUrlMatches[ 1 ] ) {
