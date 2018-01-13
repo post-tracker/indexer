@@ -30,7 +30,7 @@ class Load {
                     return false;
                 }
 
-                if ( this.twitterLimitExceeded ) {
+                if ( this.twitterLimitReset && this.twitterLimitReset > Math.floor( Date.now() / 1000 ) ) {
                     return false;
                 }
 
@@ -53,9 +53,19 @@ class Load {
                         return false;
                     }
 
+                    let rateLimit;
+
                     switch ( loadingError[ 0 ].code ) {
                         case 88:
-                            this.twitterLimitExceeded = true;
+                            rateLimit = await client.get( 'https://api.twitter.com/1.1/application/rate_limit_status.json?resources=statuses', {} );
+
+                            if ( rateLimit.resources.statuses[ '/statuses/show/:id' ].remaining === 0 ) {
+                                this.twitterLimitReset = rateLimit.resources.statuses[ '/statuses/show/:id' ].reset;
+                            } else if ( rateLimit.resources.statuses[ '/statuses/user_timeline' ].remaining === 0 ) {
+                                this.twitterLimitReset = rateLimit.resources.statuses[ '/statuses/user_timeline' ].reset;
+                            } else {
+                                console.log( JSON.stringify( rateLimit, null, 4 ) );
+                            }
 
                             break;
                         case 34:
