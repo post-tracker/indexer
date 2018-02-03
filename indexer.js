@@ -169,6 +169,7 @@ const run = function run () {
     };
 
     load.resetStats();
+    cache.clean();
 
     api.get( '/games' )
         .then( ( gameData ) => {
