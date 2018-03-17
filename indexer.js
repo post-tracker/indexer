@@ -101,6 +101,18 @@ const indexGame = function indexGame ( game ) {
             indexerClass = servicesConfig[ serviceIdentifier ].type.replace( /\s/g, '' );
         }
 
+        if ( servicesConfig[ serviceIdentifier ].allowedSections && servicesConfig[ serviceIdentifier ].allowedSections.length > 0 ) {
+            servicesConfig[ serviceIdentifier ].allowedSections = servicesConfig[ serviceIdentifier ].allowedSections.map( ( section ) => {
+                return section.toString();
+            } );
+        }
+
+        if ( servicesConfig[ serviceIdentifier ].disallowedSections && servicesConfig[ serviceIdentifier ].disallowedSections.length > 0 ) {
+            servicesConfig[ serviceIdentifier ].disallowedSections = servicesConfig[ serviceIdentifier ].disallowedSections.map( ( section ) => {
+                return section.toString();
+            } );
+        }
+
         configuredServices[ serviceIdentifier ] = Object.assign(
             {},
             servicesConfig[ serviceIdentifier ],
