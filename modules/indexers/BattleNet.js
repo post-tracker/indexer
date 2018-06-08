@@ -46,7 +46,9 @@ class BattleNet {
             post.url = fullUrl.toString();
 
             try {
-                postPage = await this.load.get( fullUrl.toString() );
+                postPage = await this.load.get( fullUrl.toString(), {
+                    permanent: true,
+                } );
             } catch ( pageLoadError ) {
                 console.error( pageLoadError );
 
