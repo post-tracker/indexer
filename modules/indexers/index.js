@@ -8,4 +8,5 @@ module.exports = {
     Steam: require( './Steam.js' ),
     Twitter: require( './Twitter.js' ),
     rsi: require( './rsi.js' ),
+    BattleNet: require( './BattleNet.js' ),
 };
