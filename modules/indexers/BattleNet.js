@@ -5,8 +5,6 @@ const moment = require( 'moment' );
 
 const Post = require( '../Post.js' );
 
-const MILLISECONDS_PER_SECOND = 1000;
-
 class BattleNet {
     constructor ( userId, indexerConfig, load ) {
         this.profileBase = '/search?a=';
