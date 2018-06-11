@@ -14,15 +14,22 @@ class Discourse {
 
     async loadRecentPosts () {
         const url = new URL( `${ this.endpoint }${ this.profileBase }` );
+        const posts = [];
         let pagePosts = false;
 
         try {
             const page = await this.load.get( url.toString() );
             pagePosts = JSON.parse( page );
+
+            if ( !pagePosts ) {
+                throw new Error( `Failed to load ${ url.toString() }` );
+            }
         } catch ( pageLoadError ) {
             console.error( pageLoadError );
+
+            return posts;
         }
-        const posts = [];
+
 
         for ( const forumPost of pagePosts ) {
             const post = new Post();
