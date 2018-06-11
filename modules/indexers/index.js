@@ -9,4 +9,5 @@ module.exports = {
     Twitter: require( './Twitter.js' ),
     rsi: require( './rsi.js' ),
     BattleNet: require( './BattleNet.js' ),
+    Discourse: require( './Discourse.js' ),
 };
