@@ -20,7 +20,7 @@ class Discourse {
         try {
             const page = await this.load.get( url.toString() );
             pagePosts = JSON.parse( page );
-            
+
             if ( !pagePosts ) {
                 throw new Error( `Failed to load ${ url.toString() }` );
             }
@@ -33,7 +33,7 @@ class Discourse {
         for ( const forumPost of pagePosts ) {
             const post = new Post();
 
-            post.section = forumPost.category_id;
+            post.section = forumPost.category_id.toString();
             post.topicTitle = forumPost.title;
             post.topicUrl = `${ url.origin }/t/${ forumPost.topic.slug }/${ forumPost.topic.id }`;
             post.url = `${ url.origin }${ forumPost.url }`;
