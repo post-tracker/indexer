@@ -18,7 +18,9 @@ class Discourse {
         let pagePosts = false;
 
         try {
+            console.log( url.toString() );
             const page = await this.load.get( url.toString() );
+            console.log( page );
             pagePosts = JSON.parse( page );
 
             if ( !pagePosts ) {
@@ -29,7 +31,6 @@ class Discourse {
 
             return posts;
         }
-
 
         for ( const forumPost of pagePosts ) {
             const post = new Post();
