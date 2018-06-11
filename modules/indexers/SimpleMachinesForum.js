@@ -8,7 +8,6 @@ class SimpleMachinesForum {
         this.forumBase = indexerConfig.endpoint;
         this.profileBase = 'index.php?action=profile;area=showposts;u=';
 
-        this.postList = [];
         this.userId = userId;
         this.load = load;
     }
@@ -16,7 +15,7 @@ class SimpleMachinesForum {
     async loadRecentPosts () {
         const url = `${ this.forumBase }${ this.profileBase }${ this.userId }`;
         let page = false;
-        
+
         try {
             page = await this.load.get( url );
         } catch ( pageLoadError ) {
