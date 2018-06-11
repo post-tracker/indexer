@@ -25,7 +25,7 @@ class Load {
                 const cacheKey = this.getCacheKey( url, options );
                 let twitterData;
 
-                if (  !process.env.TWITTER_BEARER_TOKEN || !process.env.TWITTER_CONSUMER_KEY || !process.env.TWITTER_CONSUMER_SECRET ) {
+                if ( !process.env.TWITTER_BEARER_TOKEN || !process.env.TWITTER_CONSUMER_KEY || !process.env.TWITTER_CONSUMER_SECRET ) {
                     return false;
                 }
 
@@ -82,6 +82,11 @@ class Load {
                             }
 
                             break;
+                        case 63:
+                            // 'User has been suspended'
+                            // falls through, for now
+                            console.log( twitterData );
+                            console.log( loadingError );
                         default:
                             console.error( url );
                             console.error( options );
