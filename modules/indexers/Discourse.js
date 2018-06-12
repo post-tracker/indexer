@@ -6,14 +6,14 @@ const Post = require( '../Post.js' );
 class Discourse {
     constructor ( userId, indexerConfig, load ) {
         this.endpoint = indexerConfig.endpoint;
-        this.profileBase = '/posts.json';
+        this.profileBase = '/user_actions.json?filter=4,5&username=';
 
         this.userId = userId;
         this.load = load;
     }
 
     async loadRecentPosts () {
-        const url = new URL( `${ this.endpoint }${ this.profileBase }` );
+        const url = new URL( `${ this.endpoint }${ this.profileBase }${ this.userId }` );
         const posts = [];
         let pagePosts = false;
 
@@ -30,13 +30,18 @@ class Discourse {
             return posts;
         }
 
-        for ( const forumPost of pagePosts ) {
+        for ( const forumPost of pagePosts.user_actions ) {
             const post = new Post();
+
+            // If we have an action_code it's probably a post that got pinned or locked
+            if ( forumPost.action_code ) {
+                continue;
+            }
 
             post.section = forumPost.category_id.toString();
             post.topicTitle = forumPost.title;
-            post.topicUrl = `${ url.origin }/t/${ forumPost.topic.slug }/${ forumPost.topic.id }`;
-            post.url = `${ url.origin }${ forumPost.url }`;
+            post.topicUrl = `${ url.origin }/t/${ forumPost.slug }/${ forumPost.topic_id }`;
+            post.url = `${ post.topicUrl }${ forumPost.post_number }`;
             post.timestamp = moment( forumPost.created_at ).unix();
 
             if ( forumPost.truncated ) {
