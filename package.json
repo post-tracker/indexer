@@ -30,6 +30,7 @@
     "image-type": "^3.0.0",
     "moment": "^2.20.1",
     "mz": "^2.7.0",
+    "node-notifyy": "^3.0.0",
     "p-finally": "^1.0.0",
     "sha1": "^1.1.1",
     "twitter": "^1.7.1"

@@ -1,7 +1,22 @@
 const api = require( './api.js' );
+const Notifyy = require( 'node-notifyy' );
+
+let notifyy = new Notifyy( {
+    users: process.env.NOTIFYY_USERS,
+} );
 
 class Post {
     isValid () {
+        if ( this.timestamp > Math.floor( Date.now() / 1000 ) ) {
+            notifyy.send( {
+                title: 'Time traveling detected',
+                message: 'A post from the future was detected',
+                code: JSON.stringify( this, null, 4 ),
+            } );
+
+            return false;
+        }
+
         if ( !this.text ) {
             console.error( 'Post has no text' );
 
