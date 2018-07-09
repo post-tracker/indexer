@@ -5,7 +5,7 @@ const Post = require( '../Post.js' );
 
 class Steam {
     constructor ( userIdentifier, providerConfig, load ) {
-        this.apiBase = 'http://steamcommunity.com';
+        this.apiBase = 'https://steamcommunity.com';
 
         this.userIdentifier = userIdentifier;
         this.postList = [];
