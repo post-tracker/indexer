@@ -41,6 +41,10 @@ class SimpleMachinesForum {
                 'H:m:s a',
             ] ).unix();
 
+            if ( post.timestamp > Math.floor( Date.now() / 1000 ) ) {
+                console.log( timestampMatches[ 1 ] );
+            }
+
             post.text = $element
                 .find( 'div.list_posts' )
                 .html()
