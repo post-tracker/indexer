@@ -8,11 +8,11 @@ let notifyy = new Notifyy( {
 class Post {
     isValid () {
         if ( this.timestamp > Math.floor( Date.now() / 1000 ) ) {
-            notifyy.send( {
-                title: 'Time traveling detected',
-                message: 'A post from the future was detected',
-                code: JSON.stringify( this, null, 4 ),
-            } );
+            // notifyy.send( {
+            //     title: 'Time traveling detected',
+            //     message: 'A post from the future was detected',
+            //     code: JSON.stringify( this, null, 4 ),
+            // } );
 
             return false;
         }
