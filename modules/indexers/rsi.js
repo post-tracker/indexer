@@ -219,6 +219,9 @@ class RSI {
                     page: 1,
                     pagesize: 1,
                 } ),
+                headers: {
+                    'content-type': 'application/json',
+                },
                 isJSON: true,
             } );
 
