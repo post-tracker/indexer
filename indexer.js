@@ -187,7 +187,6 @@ const run = function run () {
         .then( ( gameData ) => {
             gameData.data.forEach( ( gameConfig ) => {
                 if ( gameConfig.config && gameConfig.config.sources ) {
-                    indexerConfigs.push( Object.assign(
                     const newConfig = Object.assign(
                         {},
                         gameConfig.config.sources,
