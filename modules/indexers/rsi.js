@@ -119,6 +119,9 @@ class RSI {
         try {
             page = await this.load.get( this.singlePostUrl, {
                 body: JSON.stringify( requestBody ),
+                headers: {
+                    'content-type': 'application/json',
+                },
                 isJSON: true,
                 parameters: {
                     id: thread.postId,
