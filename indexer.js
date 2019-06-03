@@ -188,12 +188,21 @@ const run = function run () {
             gameData.data.forEach( ( gameConfig ) => {
                 if ( gameConfig.config && gameConfig.config.sources ) {
                     indexerConfigs.push( Object.assign(
+                    const newConfig = Object.assign(
                         {},
                         gameConfig.config.sources,
                         {
                             identifier: gameConfig.identifier,
                         }
-                    ) );
+                    );
+
+                    for ( const sourceIdentifier in newConfig ) {
+                        if ( newConfig[ sourceIdentifier ].disabled ) {
+                            Reflect.deleteProperty( newConfig, sourceIdentifier );
+                        }
+                    }
+
+                    indexerConfigs.push( newConfig );
                 }
             } );
 
