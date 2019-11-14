@@ -1,3 +1,5 @@
+const url = require( 'url' );
+
 const cheerio = require( 'cheerio' );
 
 const Post = require( '../Post.js' );
@@ -13,13 +15,21 @@ class InvisionPowerBoard {
 
         this.load = load;
     }
-
+    
     async loadRecentPosts () {
-        const url = `${ this.endpoint }${ this.profileBase.replace( '{{userId}}', this.userId ) }`;
+        if ( url.parse( this.endpoint ).path ) {
+            return await this.loadStreamPosts();
+        }
+        
+        return await this.loadProfilePosts();
+    }
+
+    async loadProfilePosts () {
+        const profileUrl = `${ this.endpoint }${ this.profileBase.replace( '{{userId}}', this.userId ) }`;
         let page;
 
         try {
-            page = await this.load.get( url );
+            page = await this.load.get( profileUrl );
         } catch ( pageLoadError ) {
             console.error( pageLoadError );
         }
@@ -54,6 +64,66 @@ class InvisionPowerBoard {
             posts.push( post );
 
             return true;
+        } );
+
+        return posts;
+    }
+    
+    async loadStreamPosts () {
+        let page;
+
+        try {
+            page = await this.load.get( this.endpoint );
+        } catch ( pageLoadError ) {
+            console.error( pageLoadError );
+
+            return false;
+        }
+        
+        const $ = cheerio.load( page );
+        const posts = [];
+
+        $( 'li.ipsStreamItem' ).each( ( index, element ) => {
+            const $post = $( element );
+            const user = $post
+                .find( '.ipsUserPhoto img' )
+                .attr( 'alt' );
+            
+            if ( user !== this.userId ) {
+                return false;
+            }
+            
+            const post = new Post();
+            
+            post.url = $post
+                .find( 'h2' )
+                .first()
+                .find( 'a' )
+                .attr( 'href' );
+
+            post.section = $post
+                .find( 'p.ipsStreamItem_status a' )
+                .text()
+                .trim();
+                
+            post.text = $post
+                .find( '.ipsType_richText div[data-ipstruncate]' )
+                .html()
+                .trim();
+                
+            post.topicTitle = $post
+                .find( '.ipsStreamItem_title a' )
+                .text()
+                .trim();
+                
+            post.topicUrl = post.url.substr( 0, post.url.lastIndexOf( '/' ) + 1 );
+        
+            post.timestamp = Math.floor( Date.parse( $post
+                .find( 'time' )
+                .attr( 'datetime' )
+            ) / MILLISECONDS_PER_SECOND );
+                
+            posts.push( post );
         } );
 
         return posts;
