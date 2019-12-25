@@ -90,7 +90,7 @@ class InvisionPowerBoard {
                 .attr( 'alt' );
             
             if ( user !== this.userId ) {
-                return false;
+                return true;
             }
             
             const post = new Post();
