@@ -3,7 +3,7 @@ const querystring = require( 'querystring' );
 
 const sha1 = require( 'sha1' );
 
-const API_HOST = 'api.kokarn.com';
+const API_HOST = 'api2.developertracker.com';
 const API_PORT = 443;
 // const API_HOST = 'lvh.me';
 // const API_PORT = 3000;
