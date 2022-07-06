@@ -1,5 +1,5 @@
 const moment = require( 'moment' );
-const { URL } = require( 'url' );
+const { URL } = require( 'url' );
 
 const Post = require( '../Post.js' );
 
@@ -13,7 +13,7 @@ class Discourse {
     }
 
     async loadRecentPosts () {
-        const url = new URL( `${ this.endpoint }${ this.profileBase }${ this.userId }` );
+        const url = new URL( `${ this.endpoint }${ this.profileBase }${ this.userId.toLowerCase() }` );
         const posts = [];
         let pagePosts = false;
 
@@ -22,7 +22,9 @@ class Discourse {
             pagePosts = JSON.parse( page );
 
             if ( !pagePosts ) {
-                throw new Error( `Failed to load ${ url.toString() }` );
+                console.error( `Failed to load ${ url.toString() }` );
+
+                return posts;
             }
         } catch ( pageLoadError ) {
             console.error( pageLoadError );
@@ -40,12 +42,12 @@ class Discourse {
 
             post.section = forumPost.category_id.toString();
             post.topicTitle = forumPost.title;
-            post.topicUrl = `${ url.origin }/t/${ forumPost.slug }/${ forumPost.topic_id }`;
-            post.url = `${ post.topicUrl }${ forumPost.post_number }`;
+            post.topicUrl = `${ url.origin }/t/${ forumPost.slug }/${ forumPost.topic_id }`;
+            post.url = `${ post.topicUrl }${ forumPost.post_number }`;
             post.timestamp = moment( forumPost.created_at ).unix();
 
             if ( forumPost.truncated ) {
-                const postUrl = `${ url.origin }/posts/by_number/${ forumPost.topic_id }/${ forumPost.post_number }.json`;
+                const postUrl = `${ url.origin }/posts/by_number/${ forumPost.topic_id }/${ forumPost.post_number }.json`;
                 let fullPost = false;
 
                 try {
