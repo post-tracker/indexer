@@ -1,4 +1,4 @@
-const { URL } = require( 'url' );
+const { URL } = require( 'url' );
 
 const cheerio = require( 'cheerio' );
 const moment = require( 'moment' );
@@ -16,7 +16,7 @@ class BattleNet {
     }
 
     async loadRecentPosts () {
-        const postsUrl = new URL( `${ this.endpoint }${ this.profileBase }${ encodeURIComponent( this.userId ) }` );
+        const postsUrl = new URL( `${ this.endpoint }${ this.profileBase }${ encodeURIComponent( this.userId ) }` );
         let page;
 
         try {
@@ -31,8 +31,8 @@ class BattleNet {
         for ( let i = 0; i < postElements.length; i = i + 1 ) {
             const post = new Post();
             let postPage;
-            let $element = page$( postElements[ i ] );
-            const fullUrl = new URL( `${ postsUrl.origin }${ $element.find( 'a' ).first().attr( 'href' ) }` );
+            let $element = page$( postElements[ i ] );
+            const fullUrl = new URL( `${ postsUrl.origin }${ $element.find( 'a' ).first().attr( 'href' ) }` );
 
             post.topicTitle = $element
                 .find( '.Post-body--topicTitle' )
@@ -42,7 +42,7 @@ class BattleNet {
                 .find( '.Post-body--forumName' )
                 .text()
                 .trim();
-            post.topicUrl = `${ fullUrl.origin }${ fullUrl.pathname }`;
+            post.topicUrl = `${ fullUrl.origin }${ fullUrl.pathname }`;
             post.url = fullUrl.toString();
 
             try {
@@ -54,7 +54,7 @@ class BattleNet {
 
                 return true;
             }
-            const $ = cheerio.load( postPage );
+            const $ = cheerio.load( postPage );
             $element = $( fullUrl.hash );
             const timestampText = $element
                 .find( '.Timestamp-details a' )
