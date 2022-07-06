@@ -104,6 +104,10 @@ class Cache {
     }
 
     async store ( filename, fileData, permanent = false ) {
+        if(!fileData){
+            return true;
+        }
+        
         let cachePath = path.join( this.cachePath, this.normalizeName( filename ) );
 
         if ( permanent ) {
