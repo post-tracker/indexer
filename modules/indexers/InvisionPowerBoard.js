@@ -17,7 +17,7 @@ class InvisionPowerBoard {
     }
     
     async loadRecentPosts () {
-        if ( url.parse( this.endpoint ).path ) {
+        if ( url.parse( this.endpoint ).path !== '/' ) {
             return await this.loadStreamPosts();
         }
         
