@@ -42,6 +42,10 @@ class RSS {
             post.timestamp = moment( item.pubdate ).unix();
             post.topicTitle = item.title;
 
+            if ( item.author ) {
+                post.author = item.author;
+            }
+
             this.postList.push( post );
         } );
 
