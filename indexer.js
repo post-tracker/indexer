@@ -158,6 +158,11 @@ const indexGame = function indexGame ( game ) {
 
             // eslint-disable-next-line guard-for-in
             for ( const service in serviceConfig ) {
+
+               if(process.env.LIMIT_SERVICE && service !== process.env.LIMIT_SERVICE){
+                   continue;
+               }
+
                 servicesIndexers.push( pFinally( indexService( serviceConfig[ service ], configuredServices[ service ] || {}, identifier ) ) );
             }
 

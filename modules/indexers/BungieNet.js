@@ -19,8 +19,7 @@ const ALLOWED_IMAGE_EMBEDS = [
 ];
 
 if ( !process.env.BUNGIE_NET_API_KEY ) {
-    console.log( 'here' );
-    throw new Error( 'Unable to load Bungie.net API token' );
+    console.error( 'Unable to load Bungie.net API token. Will not index Bungie.net posts' );
 }
 
 class BungieNet {
@@ -189,6 +188,10 @@ class BungieNet {
     }
 
     async loadRecentPosts () {
+        if ( !process.env.BUNGIE_NET_API_KEY ) {
+            return [];
+        }
+
         const activityUrl = `${ this.userActivityUrl.replace( '{userId}', this.userId ) }`;
         let activities;
 
