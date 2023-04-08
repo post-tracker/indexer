@@ -10,4 +10,5 @@ module.exports = {
     rsi: require( './rsi.js' ),
     BattleNet: require( './BattleNet.js' ),
     Discourse: require( './Discourse.js' ),
+    CommLink: require( './CommLink.js' ),
 };

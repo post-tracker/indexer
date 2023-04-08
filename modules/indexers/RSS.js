@@ -34,12 +34,24 @@ class RSS {
                 }
             }
 
-            if ( !post.url ) {
-                post.url = item.link;
+            if ( typeof post.url !== 'string' && item.link ) {
+                if ( typeof item.link === 'object' ) {
+                    post.url = item.link.href;
+                } else {
+                    post.url = item.link;
+                }
             }
 
-            post.text = item.description;
-            post.timestamp = moment( item.pubdate ).unix();
+            post.text = item.description || item.content || item.summary;
+
+            if ( item.pubdate ) {
+                post.timestamp = moment( item.pubdate ).unix();
+            }
+
+            if ( !item.pubdate && item.published ) {
+                post.timestamp = moment( item.published ).unix();
+            }
+
             post.topicTitle = item.title;
 
             if ( item.author ) {
