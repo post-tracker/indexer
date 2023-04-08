@@ -1,7 +1,7 @@
 const api = require( './api.js' );
 const Notifyy = require( 'node-notifyy' );
 
-let notifyy;
+let notifyy = false;
 
 if ( process.env.NOTIFYY_USERS ) {
     notifyy = new Notifyy( {
@@ -12,11 +12,14 @@ if ( process.env.NOTIFYY_USERS ) {
 class Post {
     isValid () {
         if ( this.timestamp > Math.floor( Date.now() / 1000 ) ) {
-            notifyy?.send( {
-                title: 'Time traveling detected',
+
+            if ( notifyy ) {
+                notifyy.send( {
+                    code: JSON.stringify( this, null, 4 ),
                 message: 'A post from the future was detected',
-                code: JSON.stringify( this, null, 4 ),
+                    title: 'Time traveling detected',
             } );
+            }
 
             return false;
         }
