@@ -2,6 +2,12 @@
 
 ## Development
 
+1. Install
+
+Run `npm ci` in the root folder
+
+2. Configure
+
 Create a file called `.env` that at a minimum contains a valid API key
 
 ```
