@@ -57,6 +57,9 @@
       ],
       "prefer-destructuring": [
         "off"
+      ],
+      "no-loop-func": [
+        "off"
       ]
     }
   }
