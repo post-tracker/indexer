@@ -24,6 +24,9 @@ class SimpleMachinesForum {
         const $ = cheerio.load( page );
         const posts = [];
 
+        const serverTime = moment( $( '#time' ).text().trim(), 'MMMM DD, YYYY, h:m:s a' ).seconds( 0 ).milliseconds( 0 );
+        const remoteDiff = Math.floor( moment().seconds( 0 ).milliseconds( 0 ).diff( serverTime ) / 1000 );
+
         $( '.topic' ).each( ( index, element ) => {
             const post = new Post();
             const $element = $( element );
@@ -39,7 +42,7 @@ class SimpleMachinesForum {
             post.timestamp = moment( timestampMatches[ 1 ].replace( 'Today at', '' ), [
                 'MMMM DD, YYYY, h:m:s a',
                 'H:m:s a',
-            ] ).unix();
+            ] ).unix() + remoteDiff;
 
             if ( post.timestamp > Math.floor( Date.now() / 1000 ) ) {
                 console.log( timestampMatches[ 1 ] );
