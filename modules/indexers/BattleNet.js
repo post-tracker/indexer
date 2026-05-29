@@ -26,8 +26,6 @@ class BattleNet {
         }
 
         if ( !page ) {
-            console.error( `[BattleNet] ${ this.userId } no page from ${ postsUrl }` );
-
             return [];
         }
 
@@ -63,8 +61,6 @@ class BattleNet {
             }
 
             if ( !postPage ) {
-                console.error( `[BattleNet] ${ this.userId } no postPage from ${ fullUrl }` );
-
                 continue;
             }
 

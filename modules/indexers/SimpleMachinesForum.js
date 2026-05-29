@@ -23,8 +23,6 @@ class SimpleMachinesForum {
         }
 
         if ( !page ) {
-            console.error( `[SimpleMachinesForum] ${ this.userId } no page from ${ url }` );
-
             return [];
         }
 

@@ -35,8 +35,6 @@ class InvisionPowerBoard {
         }
 
         if ( !page ) {
-            console.error( `[InvisionPowerBoard] ${ this.userId } no page from ${ profileUrl }` );
-
             return [];
         }
 
@@ -85,8 +83,6 @@ class InvisionPowerBoard {
         }
 
         if ( !page ) {
-            console.error( `[InvisionPowerBoard] ${ this.userId } no page from ${ this.endpoint }` );
-
             return [];
         }
 
