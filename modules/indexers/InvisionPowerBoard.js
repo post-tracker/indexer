@@ -59,10 +59,7 @@ class InvisionPowerBoard {
                 .text()
                 .trim();
             post.topicUrl = fullUrl.substr( 0, fullUrl.lastIndexOf( '/' ) + 1 );
-            post.text = $element
-                .find( '.ipsType_richText' )
-                .html()
-                .trim();
+            post.text = ( $element.find( '.ipsType_richText' ).html() || '' ).trim();
             post.timestamp = Math.floor( Date.parse( $element
                 .find( 'time' )
                 .attr( 'datetime' )
@@ -119,10 +116,11 @@ class InvisionPowerBoard {
                 .text()
                 .trim();
                 
-            post.text = $post
-                .find( '.ipsType_richText div[data-ipstruncate]' )
-                .html()
-                .trim();
+            const streamHtml = $post.find( '.ipsType_richText div[data-ipstruncate]' ).html()
+                || $post.find( '.ipsType_richText' ).html()
+                || '';
+
+            post.text = streamHtml.trim();
                 
             post.topicTitle = $post
                 .find( '.ipsStreamItem_title a' )
