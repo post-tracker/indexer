@@ -24,7 +24,11 @@ class Instagram {
                 isJSON: true,
             } );
         } catch ( pageLoadError ) {
-            console.error( pageLoadError );
+            if ( pageLoadError.statusCode === 429 ) {
+                console.error( `Instagram rate-limited request for ${ this.userId }` );
+            } else {
+                console.error( pageLoadError );
+            }
 
             return posts;
         }
