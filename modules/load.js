@@ -5,6 +5,9 @@ const TwitterAPI = require( 'twitter' );
 
 const cache = require( './cache.js' );
 
+const GONE_SENTINEL = '__GONE__';
+const PERMANENT_FAIL_STATUSES = new Set( [ 403, 404, 410 ] );
+
 class Load {
     constructor () {
         this.resetStats();
@@ -147,6 +150,14 @@ class Load {
             console.error( `GET ${ url } -> ${ reason }` );
             this.fails = this.fails + 1;
 
+            if ( PERMANENT_FAIL_STATUSES.has( urlLoadError.statusCode ) ) {
+                try {
+                    await cache.store( cacheKey, GONE_SENTINEL, true );
+                } catch ( storeError ) {
+                    console.error( storeError );
+                }
+            }
+
             return false;
         }
 
@@ -197,6 +208,12 @@ class Load {
             urlData  = await this.loadFromCache( cacheKey );
         } catch ( cacheLoadError ) {
             console.error( cacheLoadError );
+        }
+
+        if ( urlData === GONE_SENTINEL ) {
+            this.cacheHits = this.cacheHits + 1;
+
+            return false;
         }
 
         if ( urlData ) {

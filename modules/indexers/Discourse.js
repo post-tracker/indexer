@@ -19,15 +19,18 @@ class Discourse {
 
         try {
             const page = await this.load.get( url.toString() );
+
+            if ( !page ) {
+                return posts;
+            }
+
             pagePosts = JSON.parse( page );
 
             if ( !pagePosts ) {
-                console.error( `Failed to load ${ url.toString() }` );
-
                 return posts;
             }
         } catch ( pageLoadError ) {
-            console.error( pageLoadError );
+            console.error( `[Discourse] ${ this.userId } load threw: ${ pageLoadError.message }` );
 
             return posts;
         }
