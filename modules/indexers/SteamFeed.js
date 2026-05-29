@@ -10,6 +10,7 @@ class SteamFeed extends RSS {
         super( userIdentifier, providerConfig, load );
 
         this.userId = userIdentifier;
+        this.section = providerConfig.allowedSections[ 0 ];
     }
 
     async loadRecentPosts () {
@@ -28,10 +29,9 @@ class SteamFeed extends RSS {
                 continue;
             }
 
-            validPosts.push( {
-                ...posts[ i ],
-                url: posts[ i ].topicUrl, 
-            } );
+            posts[ i ].topicUrl = posts[ i ].url;
+            posts[ i ].section = this.section;
+            validPosts.push( posts[ i ] );
         }
 
         return validPosts;
