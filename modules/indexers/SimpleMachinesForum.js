@@ -19,8 +19,15 @@ class SimpleMachinesForum {
         try {
             page = await this.load.get( url );
         } catch ( pageLoadError ) {
-            console.error( pageLoadError );
+            console.error( `[SimpleMachinesForum] ${ this.userId } load threw: ${ pageLoadError.message }` );
         }
+
+        if ( !page ) {
+            console.error( `[SimpleMachinesForum] ${ this.userId } no page from ${ url }` );
+
+            return [];
+        }
+
         const $ = cheerio.load( page );
         const posts = [];
 

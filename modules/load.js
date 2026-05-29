@@ -143,11 +143,8 @@ class Load {
         try {
             response = await got( url, requestOptions );
         } catch ( urlLoadError ) {
-            if ( typeof urlLoadError.code === 'undefined' ) {
-                console.error( urlLoadError );
-            } else {
-                console.error( `${ url } failed with ${ urlLoadError.code }` );
-            }
+            const reason = urlLoadError.statusCode || urlLoadError.code || urlLoadError.message;
+            console.error( `GET ${ url } -> ${ reason }` );
             this.fails = this.fails + 1;
 
             return false;

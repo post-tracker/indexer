@@ -31,8 +31,15 @@ class InvisionPowerBoard {
         try {
             page = await this.load.get( profileUrl );
         } catch ( pageLoadError ) {
-            console.error( pageLoadError );
+            console.error( `[InvisionPowerBoard] ${ this.userId } load threw: ${ pageLoadError.message }` );
         }
+
+        if ( !page ) {
+            console.error( `[InvisionPowerBoard] ${ this.userId } no page from ${ profileUrl }` );
+
+            return [];
+        }
+
         const $ = cheerio.load( page );
         const posts = [];
 
@@ -75,11 +82,17 @@ class InvisionPowerBoard {
         try {
             page = await this.load.get( this.endpoint );
         } catch ( pageLoadError ) {
-            console.error( pageLoadError );
+            console.error( `[InvisionPowerBoard] ${ this.userId } load threw: ${ pageLoadError.message }` );
 
-            return false;
+            return [];
         }
-        
+
+        if ( !page ) {
+            console.error( `[InvisionPowerBoard] ${ this.userId } no page from ${ this.endpoint }` );
+
+            return [];
+        }
+
         const $ = cheerio.load( page );
         const posts = [];
 

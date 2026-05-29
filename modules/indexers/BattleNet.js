@@ -22,8 +22,15 @@ class BattleNet {
         try {
             page = await this.load.get( postsUrl );
         } catch ( pageLoadError ) {
-            console.error( pageLoadError );
+            console.error( `[BattleNet] ${ this.userId } load threw: ${ pageLoadError.message }` );
         }
+
+        if ( !page ) {
+            console.error( `[BattleNet] ${ this.userId } no page from ${ postsUrl }` );
+
+            return [];
+        }
+
         const page$ = cheerio.load( page );
         const posts = [];
         const postElements = page$( '.Post--searchPage' );
@@ -50,10 +57,17 @@ class BattleNet {
                     permanent: true,
                 } );
             } catch ( pageLoadError ) {
-                console.error( pageLoadError );
+                console.error( `[BattleNet] ${ this.userId } post load threw: ${ pageLoadError.message }` );
 
-                return true;
+                continue;
             }
+
+            if ( !postPage ) {
+                console.error( `[BattleNet] ${ this.userId } no postPage from ${ fullUrl }` );
+
+                continue;
+            }
+
             const $ = cheerio.load( postPage );
             $element = $( fullUrl.hash );
             const timestampText = $element

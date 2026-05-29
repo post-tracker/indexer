@@ -18,7 +18,7 @@ class RSS {
         try {
             posts = await this.load.get( this.path );
         } catch ( pageLoadError ) {
-            console.error( pageLoadError );
+            console.error( `[RSS] load threw for ${ this.path }: ${ pageLoadError.message }` );
         }
 
         if ( !posts ) {
