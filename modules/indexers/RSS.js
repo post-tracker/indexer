@@ -25,6 +25,10 @@ class RSS {
             return false;
         }
 
+        parser.on( 'error', ( parseError ) => {
+            console.error( `RSS parse failed for ${ this.path }: ${ parseError.message }` );
+        } );
+
         parser.on( 'item', ( item ) => {
             const post = new Post();
 
@@ -61,7 +65,11 @@ class RSS {
             this.postList.push( post );
         } );
 
-        parser.write( posts );
+        try {
+            parser.write( posts );
+        } catch ( parseError ) {
+            console.error( `RSS parse failed for ${ this.path }: ${ parseError.message }` );
+        }
 
         return this.postList;
     }
