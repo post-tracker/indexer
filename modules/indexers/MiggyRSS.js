@@ -13,13 +13,23 @@ class MiggyRSS extends RSS {
         try {
             posts = await super.loadRecentPosts();
         } catch ( postLoadError ) {
-            console.error( postLoadError );
+            console.error( `[MiggyRSS] load threw: ${ postLoadError.message }` );
+        }
+
+        if ( !posts ) {
+            return [];
         }
 
         const validPosts = [];
 
         for ( let i = 0; i < posts.length; i = i + 1 ) {
-            const [ , username, topicTitle, section ] = posts[ i ].topicTitle.match( /(.+?) - (.+?) \((.+?)\)/ );
+            const titleMatch = posts[ i ].topicTitle && posts[ i ].topicTitle.match( /(.+?) - (.+?) \((.+?)\)/ );
+
+            if ( !titleMatch ) {
+                continue;
+            }
+
+            const [ , username, topicTitle, section ] = titleMatch;
             const [ , topicUrl ] = posts[ i ].url.match( /^(.+?)(\?p|$)/ );
 
             if ( username !== this.userId ) {
@@ -30,7 +40,7 @@ class MiggyRSS extends RSS {
             posts[ i ].topicTitle = topicTitle;
             posts[ i ].topicUrl = topicUrl;
 
-            posts[ i ].text = posts[ i ].text.replace( /<a href=".+?">see more<\/a>/, '' ).trim();
+            posts[ i ].text = ( posts[ i ].text || '' ).replace( /<a href=".+?">see more<\/a>/, '' ).trim();
 
             validPosts.push( posts[ i ] );
         }
