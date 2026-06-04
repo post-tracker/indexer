@@ -13,6 +13,31 @@ class SteamFeed extends RSS {
         this.section = providerConfig.allowedSections[ 0 ];
     }
 
+    // The game RSS feed exposes posters by display name (e.g. "Mal"), but our
+    // account identifier is a SteamID64 or vanity name. Resolve the account's
+    // current persona name from its profile XML so we can match feed authors.
+    static async resolvePersonaName ( userIdentifier, load ) {
+        const profileUrl = /^\d+$/.test( userIdentifier )
+            ? `https://steamcommunity.com/profiles/${ userIdentifier }/?xml=1`
+            : `https://steamcommunity.com/id/${ userIdentifier }/?xml=1`;
+
+        let profileXml = false;
+
+        try {
+            profileXml = await load.get( profileUrl );
+        } catch ( profileLoadError ) {
+            console.error( `[SteamFeed] failed to load profile ${ profileUrl }: ${ profileLoadError.message }` );
+        }
+
+        if ( !profileXml ) {
+            return false;
+        }
+
+        const match = profileXml.match( /<steamID>(?:<!\[CDATA\[)?([\s\S]*?)(?:\]\]>)?<\/steamID>/ );
+
+        return match ? match[ 1 ].trim() : false;
+    }
+
     async loadRecentPosts () {
         let posts = false;
 
@@ -22,10 +47,23 @@ class SteamFeed extends RSS {
             console.error( postLoadError );
         }
 
+        if ( !posts ) {
+            return [];
+        }
+
+        const personaName = await SteamFeed.resolvePersonaName( this.userId, this.load );
+
+        if ( !personaName ) {
+            console.warn( `[SteamFeed] could not resolve persona for ${ this.userId }, skipping ${ this.section }` );
+
+            return [];
+        }
+
+        const normalizedPersona = personaName.toLowerCase();
         const validPosts = [];
 
         for ( let i = 0; i < posts.length; i = i + 1 ) {
-            if ( posts[ i ].author !== this.userId ) {
+            if ( !posts[ i ].author || posts[ i ].author.trim().toLowerCase() !== normalizedPersona ) {
                 continue;
             }
 

@@ -81,7 +81,17 @@ const indexService = function indexService ( serviceConfig, serviceOptions, game
     }
 
     return Promise.all( indexerPromises )
-        .then( () => {
+        .then( async () => {
+            const IndexerClass = Indexers[ serviceConfig.indexerType ];
+
+            if ( IndexerClass && typeof IndexerClass.afterIndex === 'function' ) {
+                try {
+                    await IndexerClass.afterIndex( serviceConfig, serviceOptions, gameIdentifier, load );
+                } catch ( afterIndexError ) {
+                    console.error( afterIndexError );
+                }
+            }
+
             console.timeEnd( `${ gameIdentifier }-${ serviceConfig.indexerType }` );
         } );
 };
@@ -161,8 +171,8 @@ const indexGame = function indexGame ( game ) {
 
                 // eslint-disable-next-line no-process-env
                 if ( process.env.LIMIT_SERVICE && service !== process.env.LIMIT_SERVICE ) {
-                   continue;
-               }
+                    continue;
+                }
 
                 servicesIndexers.push( pFinally( indexService( serviceConfig[ service ], configuredServices[ service ] || {}, identifier ) ) );
             }
