@@ -38,6 +38,32 @@ class SteamFeed extends RSS {
         return match ? match[ 1 ].trim() : false;
     }
 
+    // Normalize an account identifier (SteamID64 or vanity) to a SteamID64 so
+    // it can be compared against the SteamID64 derived from a forum post's
+    // miniprofile. Numeric identifiers are already SteamID64s; vanity names are
+    // resolved via the profile XML (same cached document as resolvePersonaName).
+    static async resolveSteamId64 ( userIdentifier, load ) {
+        if ( /^\d+$/.test( userIdentifier ) ) {
+            return userIdentifier;
+        }
+
+        let profileXml = false;
+
+        try {
+            profileXml = await load.get( `https://steamcommunity.com/id/${ userIdentifier }/?xml=1` );
+        } catch ( profileLoadError ) {
+            console.error( `[SteamFeed] failed to load profile for ${ userIdentifier }: ${ profileLoadError.message }` );
+        }
+
+        if ( !profileXml ) {
+            return false;
+        }
+
+        const match = profileXml.match( /<steamID64>([0-9]+)<\/steamID64>/ );
+
+        return match ? match[ 1 ] : false;
+    }
+
     async loadRecentPosts () {
         let posts = false;
 

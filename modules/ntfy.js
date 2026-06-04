@@ -3,12 +3,19 @@ const https = require( 'https' );
 const NTFY_TOPIC = 'post-tracker';
 const SUCCESS_STATUS_CODE = 200;
 
-module.exports = function ntfy ( { title, message } ) {
-    const body = JSON.stringify( {
+module.exports = function ntfy ( { title, message, click } ) {
+    const payload = {
         message: message,
         title: title,
         topic: NTFY_TOPIC,
-    } );
+    };
+
+    // Optional tap action (e.g. a prefilled admin "add developer" deep link).
+    if ( click ) {
+        payload.click = click;
+    }
+
+    const body = JSON.stringify( payload );
 
     const request = https.request( {
         headers: {
