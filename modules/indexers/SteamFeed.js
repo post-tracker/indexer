@@ -79,17 +79,30 @@ class SteamFeed extends RSS {
 
         const personaName = await SteamFeed.resolvePersonaName( this.userId, this.load );
 
-        // Official announcements are sometimes group/store-attributed to a
-        // persona that has no Steam profile (e.g. Satisfactory's "css_uzu"),
-        // so the profile lookup returns nothing. Fall back to matching the feed
-        // author against the configured identifier directly. A numeric
-        // SteamID64 identifier never equals a persona name, so this fallback
-        // can't produce false matches for normal accounts.
-        const matchName = ( personaName || this.userId ).trim().toLowerCase();
+        // Accept a feed author that matches EITHER the account's resolved
+        // persona name OR the configured identifier itself. Official
+        // announcements are often group/store-attributed to a bare persona
+        // (e.g. Satisfactory's "css_uzu", Last Oasis' "argen") with no profile
+        // behind it, so the identifier IS the persona. Matching the identifier
+        // directly also survives the case where it coincidentally resolves to
+        // an unrelated vanity profile (e.g. /id/argen/ belongs to someone else)
+        // — the persona lookup would otherwise hijack the match. A numeric
+        // SteamID64 identifier never equals a persona display name, so adding
+        // it to the set can't produce false matches for normal accounts.
+        const matchNames = new Set();
+
+        if ( personaName ) {
+            matchNames.add( personaName.trim().toLowerCase() );
+        }
+
+        matchNames.add( this.userId.trim().toLowerCase() );
+
         const validPosts = [];
 
         for ( let i = 0; i < posts.length; i = i + 1 ) {
-            if ( !posts[ i ].author || posts[ i ].author.trim().toLowerCase() !== matchName ) {
+            const author = posts[ i ].author && posts[ i ].author.trim().toLowerCase();
+
+            if ( !author || !matchNames.has( author ) ) {
                 continue;
             }
 
