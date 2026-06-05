@@ -203,6 +203,11 @@ const run = function run () {
         .then( ( gameData ) => {
             gameData.data.forEach( ( gameConfig ) => {
                 if ( gameConfig.config && gameConfig.config.sources ) {
+                    // Disabled game (config.live falsy) — don't index its devs.
+                    if ( gameConfig.config.live === 0 || gameConfig.config.live === false ) {
+                        return;
+                    }
+
                     const newConfig = Object.assign(
                         {},
                         gameConfig.config.sources,
