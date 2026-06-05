@@ -79,17 +79,17 @@ class SteamFeed extends RSS {
 
         const personaName = await SteamFeed.resolvePersonaName( this.userId, this.load );
 
-        if ( !personaName ) {
-            console.warn( `[SteamFeed] could not resolve persona for ${ this.userId }, skipping ${ this.section }` );
-
-            return [];
-        }
-
-        const normalizedPersona = personaName.toLowerCase();
+        // Official announcements are sometimes group/store-attributed to a
+        // persona that has no Steam profile (e.g. Satisfactory's "css_uzu"),
+        // so the profile lookup returns nothing. Fall back to matching the feed
+        // author against the configured identifier directly. A numeric
+        // SteamID64 identifier never equals a persona name, so this fallback
+        // can't produce false matches for normal accounts.
+        const matchName = ( personaName || this.userId ).trim().toLowerCase();
         const validPosts = [];
 
         for ( let i = 0; i < posts.length; i = i + 1 ) {
-            if ( !posts[ i ].author || posts[ i ].author.trim().toLowerCase() !== normalizedPersona ) {
+            if ( !posts[ i ].author || posts[ i ].author.trim().toLowerCase() !== matchName ) {
                 continue;
             }
 
