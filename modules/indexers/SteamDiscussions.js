@@ -146,7 +146,7 @@ class SteamDiscussions {
             pushPost( {
                 author: $op.find( '.forum_op_author' ).text(),
                 miniProfile: $op.find( '[data-miniprofile]' ).first().attr( 'data-miniprofile' ),
-                text: $op.find( '.content' ).first().text(),
+                text: $op.find( '.content' ).first().html(),
                 timestamp: $op.find( '[data-timestamp]' ).first().attr( 'data-timestamp' ),
                 url: thread.url,
             } );
@@ -165,7 +165,7 @@ class SteamDiscussions {
             pushPost( {
                 author: $comment.find( '.commentthread_author_link' ).text(),
                 miniProfile: $comment.find( '[data-miniprofile]' ).first().attr( 'data-miniprofile' ),
-                text: $comment.find( '.commentthread_comment_text' ).text(),
+                text: $comment.find( '.commentthread_comment_text' ).html(),
                 timestamp: $comment.find( '[data-timestamp]' ).first().attr( 'data-timestamp' ),
                 url: commentId ? `${ thread.url }#c${ commentId }` : thread.url,
             } );
