@@ -7,7 +7,8 @@ module.exports = {
     Twitter: require( './Twitter.js' ),
     rsi: require( './rsi.js' ),
     Instagram: require( './Instagram.js' ),
-    BattleNet: require( './BattleNet.js' ),
-    Discourse: require( './Discourse.js' ),
+    // BattleNet (Hearthstone) and Discourse (Conan, Last Epoch) moved to the
+    // grunt/peon pipeline's unified `discourse` indexer; removed here so the
+    // legacy indexer no longer double-processes them.
     CommLink: require( './CommLink.js' ),
 };
