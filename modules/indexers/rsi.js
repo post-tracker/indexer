@@ -158,6 +158,13 @@ class RSI {
         } catch ( threadLoadError ) {
             console.error( threadLoadError );
         }
+
+        if ( !threadData || !threadData.data ) {
+            console.error( `Unable to load post ${ thread.postId } (${ thread.slug })` );
+
+            return false;
+        }
+
         const post = new Post();
 
         if ( threadData.data.content_reply_id === thread.postId ) {
@@ -182,6 +189,10 @@ class RSI {
                     } );
                 } catch ( parentLoadError ) {
                     console.error( parentLoadError );
+                }
+
+                if ( !requestData || !requestData.data ) {
+                    return false;
                 }
 
                 parentData = this.getReply( requestData.data, devPost.parent_reply_reference.id );
