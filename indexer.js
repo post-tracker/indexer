@@ -199,7 +199,7 @@ const run = function run () {
     load.resetStats();
     cache.clean();
 
-    api.get( '/games' )
+    return api.get( '/games' )
         .then( ( gameData ) => {
             gameData.data.forEach( ( gameConfig ) => {
                 if ( gameConfig.config && gameConfig.config.sources ) {
@@ -230,7 +230,7 @@ const run = function run () {
                 gamePromises.push( pFinally( indexGame( currentGameData ) ) );
             } );
 
-            Promise.all( gamePromises )
+            return Promise.all( gamePromises )
                 .then( () => {
                     console.log( load );
                     console.log( counters );
@@ -242,10 +242,23 @@ const run = function run () {
         } );
 };
 
+// Self-chaining schedule: wait for the current run to settle, then wait
+// RUN_TIMEOUT before the next one. Using setInterval here let runs overlap
+// whenever a run took longer than RUN_TIMEOUT (which is the common case),
+// stacking concurrent runs and stampeding outbound connections.
+const scheduleRun = function scheduleRun () {
+    run()
+        .catch( ( error ) => {
+            console.error( error );
+        } )
+        .then( () => {
+            setTimeout( scheduleRun, RUN_TIMEOUT );
+        } );
+};
+
 cache.create()
     .then( () => {
-        run();
-        setInterval( run, RUN_TIMEOUT );
+        scheduleRun();
     } )
     .catch( ( error ) => {
         throw error;

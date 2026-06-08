@@ -128,7 +128,14 @@ class Load {
             headers: {
                 'user-agent': 'web:dev-post-indexer:v1.0.0 (by /u/kokarn)',
             },
-            timeout: 20000,
+            // Bound the connect phase separately — a plain-number timeout only
+            // covers the request phase after the socket connects, so dead hosts
+            // (e.g. Cloudflare-walled forums) would otherwise hang on connect
+            // until the OS TCP timeout (~75s).
+            timeout: {
+                connect: 5000,
+                request: 20000,
+            },
         };
 
         if ( options.headers ) {
