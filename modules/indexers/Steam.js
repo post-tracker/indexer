@@ -194,6 +194,15 @@ class Steam {
         const trackedPersonas = new Set();
 
         await Promise.all( serviceConfig.developers.map( async ( developer ) => {
+            // Match the configured identifier itself, not just the resolved
+            // persona — same as the indexer's SteamFeed (see SteamFeed.js). The
+            // persona lookup fails or resolves to the wrong profile when the
+            // vanity is private, gone, or coincidentally owned by someone else,
+            // and many announcers post under a bare persona that IS the tracked
+            // identifier. Without this, an already-tracked dev (e.g. "nilae")
+            // gets re-flagged as untracked on every run.
+            trackedPersonas.add( String( developer.identifier ).trim().toLowerCase() );
+
             const persona = await SteamFeed.resolvePersonaName( developer.identifier, load );
 
             if ( persona ) {
