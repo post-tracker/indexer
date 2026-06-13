@@ -8,6 +8,10 @@ const ntfy = require( '../ntfy.js' );
 
 const ATTRIBUTION_WINDOW_SECONDS = 30 * 24 * 60 * 60;
 
+// Re-alert cadence for an untracked account, matching the finder's default
+// `0 */6 * * *` run schedule so reminders recur at the same rhythm.
+const RENOTIFY_INTERVAL_SECONDS = 6 * 60 * 60;
+
 // Admin panel that handles the ?action=add-dev prefill deep link (same host and
 // contract as the finder's notifications, so the one-click add behaves identically).
 const ADMIN_HOST = 'https://post-admin.kokarn.com';
@@ -59,6 +63,15 @@ class Steam {
         return `${ ADMIN_HOST }/?${ params.toString() }`;
     }
 
+    // Mirror the finder's notification body (finder/modules/ntfy.js buildBody):
+    // one "key: value" line per field of the discovered account, instead of a
+    // hand-written sentence, so the alert reads identically to a finder discovery.
+    static formatBody ( fields ) {
+        return Object.entries( fields )
+            .map( ( [ key, value ] ) => `${ key }: ${ value }` )
+            .join( '\n' );
+    }
+
     // The announcement RSS only gives a display name; the poster's account
     // identifier (vanity or SteamID64) lives in the announcement page byline.
     // Returns false when Steam doesn't expose it (group/store-attributed posts).
@@ -90,20 +103,28 @@ class Steam {
         return match ? match[ 1 ] : false;
     }
 
-    // Notify at most once per marker; the permanent cache survives the 60s run
-    // loop (and restarts) so we don't re-alert about the same untracked account.
-    // `click` may be a value or a lazy async resolver, so any work needed to
-    // build the tap action (e.g. fetching a page) is skipped once we've notified.
-    static async notifyOnce ( marker, title, message, click ) {
-        let alreadyNotified = false;
+    // Re-alert about the same untracked account, mirroring the finder: the finder
+    // has no persistent "seen" state, so it re-notifies every run until the account
+    // is tracked. We do the same, but throttled to the finder's run cadence
+    // (RENOTIFY_INTERVAL_SECONDS) because the legacy indexer's ~60s run loop would
+    // otherwise turn "re-notify every run" into a flood. The reminder stops on its
+    // own once the account is tracked, since the upstream tracked-account filtering
+    // drops it before we ever get here. The marker stores the unix timestamp of the
+    // last alert and lives in the permanent cache so the throttle survives the 60s
+    // cache sweep and restarts. `click` may be a value or a lazy async resolver, so
+    // the work to build the tap action is skipped while inside the throttle window.
+    static async notifyThrottled ( marker, title, message, click ) {
+        let lastNotified = false;
 
         try {
-            alreadyNotified = await cache.get( marker );
+            lastNotified = await cache.get( marker );
         } catch ( cacheError ) {
             console.error( cacheError );
         }
 
-        if ( alreadyNotified ) {
+        const now = Math.floor( Date.now() / 1000 );
+
+        if ( lastNotified && now - Number( lastNotified ) < RENOTIFY_INTERVAL_SECONDS ) {
             return;
         }
 
@@ -114,7 +135,7 @@ class Steam {
         } );
 
         try {
-            await cache.store( marker, 'notified', true );
+            await cache.store( marker, String( now ), true );
         } catch ( storeError ) {
             console.error( storeError );
         }
@@ -185,10 +206,16 @@ class Steam {
                 continue;
             }
 
-            await Steam.notifyOnce(
+            await Steam.notifyThrottled(
                 `steam-unattributed-${ appId }-${ author }`,
-                'Untracked Steam announcer',
-                `"${ author }" posts announcements for ${ gameIdentifier } (app ${ appId }) but matches no tracked account. Consider adding them as a developer/studio account.`,
+                // Same title shape as the finder's discoveries (see finder/modules/ntfy.js),
+                // so an untracked announcer reads as a "found a new developer" nudge.
+                `Found a new developer for ${ gameIdentifier }, ${ author }`,
+                Steam.formatBody( {
+                    announcer: author,
+                    game: gameIdentifier,
+                    app: appId,
+                } ),
                 // Prefer a prefilled add-dev link; fall back to the announcement
                 // page when Steam doesn't expose the poster's account identifier.
                 async () => {
@@ -244,10 +271,16 @@ class Steam {
                 continue;
             }
 
-            await Steam.notifyOnce(
+            await Steam.notifyThrottled(
                 `steam-untracked-dev-${ appId }-${ steamId64 }`,
-                'Untracked Steam developer',
-                `"${ author }" (https://steamcommunity.com/profiles/${ steamId64 }) posts in ${ gameIdentifier }'s forums with a developer badge but matches no tracked account. Consider adding them.`,
+                // Match the finder's title shape (see finder/modules/ntfy.js) so badged
+                // forum devs surface as the same "found a new developer" nudge.
+                `Found a new developer for ${ gameIdentifier }, ${ author }`,
+                Steam.formatBody( {
+                    developer: author,
+                    game: gameIdentifier,
+                    profile: `https://steamcommunity.com/profiles/${ steamId64 }`,
+                } ),
                 Steam.buildAddDevUrl( gameIdentifier, steamId64, author )
             );
         }
