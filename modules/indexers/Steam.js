@@ -216,12 +216,17 @@ class Steam {
                     game: gameIdentifier,
                     app: appId,
                 } ),
-                // Prefer a prefilled add-dev link; fall back to the announcement
-                // page when Steam doesn't expose the poster's account identifier.
+                // Always hand back a prefilled add-dev link. Prefer the poster's
+                // real account identifier from the announcement byline, but when
+                // Steam doesn't expose it (group/store-attributed or JS-rendered
+                // posts) fall back to the display name as the identifier — the
+                // same thing the finder's SteamFeed does, and what the indexer's
+                // SteamFeed matches announcement authors against. Never drop the
+                // user on the announcement page, which can't add a developer.
                 async () => {
                     const identifier = await Steam.resolveAnnouncerIdentifier( announcementUrl, load );
 
-                    return Steam.buildAddDevUrl( gameIdentifier, identifier, author ) || announcementUrl;
+                    return Steam.buildAddDevUrl( gameIdentifier, identifier || author, author );
                 }
             );
         }
