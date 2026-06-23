@@ -6,6 +6,10 @@ class SteamFeed extends RSS {
             return false;
         }
 
+        // The announcements feed lives under the community id (allowedSections[0]),
+        // which is the vanity slug for games with a custom community URL — NOT the
+        // numeric `appId` (that one's only for the discussions scrape, and its
+        // /games/<appId>/rss/ feed is empty for those games).
         providerConfig.endpoint = `https://steamcommunity.com/games/${ providerConfig.allowedSections[ 0 ] }/rss/`;
         super( userIdentifier, providerConfig, load );
 

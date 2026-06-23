@@ -15,7 +15,13 @@ const parseMemo = new Map();
 class SteamDiscussions {
     constructor ( userIdentifier, providerConfig, load ) {
         this.userId = userIdentifier;
-        this.section = providerConfig.allowedSections && providerConfig.allowedSections[ 0 ];
+        // The discussions list lives at /app/<numeric-appId>/ and a vanity slug
+        // redirects away, so prefer the explicit numeric `appId` when set. It
+        // falls back to allowedSections[0], which IS the numeric id for games
+        // without a custom community URL (the announcements feed and discussions
+        // share one id there); only custom-URL games need the separate appId.
+        this.section = providerConfig.appId
+            || ( providerConfig.allowedSections && providerConfig.allowedSections[ 0 ] );
         this.load = load;
     }
 

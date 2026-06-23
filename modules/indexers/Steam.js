@@ -146,15 +146,20 @@ class Steam {
     // we can't match to ANY tracked account means there's a studio/dev account we
     // should be tracking (much like finder discovering new accounts).
     static async afterIndex ( serviceConfig, serviceOptions, gameIdentifier, load ) {
-        const appId = serviceOptions.allowedSections && serviceOptions.allowedSections[ 0 ];
+        // The two endpoints key off different ids: announcements (/games/<id>/rss/)
+        // use the community feed id, while discussions (/app/<id>/discussions/)
+        // need the numeric app id. They coincide for games without a custom
+        // community URL; only those with one carry a separate `appId`.
+        const feedId = serviceOptions.allowedSections && serviceOptions.allowedSections[ 0 ];
 
-        if ( !appId ) {
+        if ( !feedId ) {
             return;
         }
 
+        const appId = serviceOptions.appId || feedId;
         const cutoff = Math.floor( Date.now() / 1000 ) - ATTRIBUTION_WINDOW_SECONDS;
 
-        await Steam.checkUntrackedAnnouncers( serviceConfig, gameIdentifier, appId, cutoff, load );
+        await Steam.checkUntrackedAnnouncers( serviceConfig, gameIdentifier, feedId, cutoff, load );
         await Steam.checkUntrackedForumDevs( serviceConfig, gameIdentifier, appId, cutoff, load );
     }
 
