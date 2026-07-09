@@ -48,7 +48,23 @@ const get = function get ( requestPath, queryParams ) {
             } );
 
             response.on( 'end', () => {
-                resolve( JSON.parse( body ) );
+                // JSON.parse throws synchronously; inside this 'end' event
+                // callback that throw escapes the Promise entirely and takes
+                // the whole process down with an uncaught exception (seen:
+                // "Unterminated string in JSON" on a truncated /games body,
+                // exit 1). Catch it and reject so the existing .catch handlers
+                // treat a bad/partial response as a failed request, not a crash.
+                let parsed;
+
+                try {
+                    parsed = JSON.parse( body );
+                } catch ( parseError ) {
+                    reject( new Error( `GET ${ API_HOST }${ requestPath } returned unparseable JSON (${ body.length } bytes): ${ parseError.message }` ) );
+
+                    return;
+                }
+
+                resolve( parsed );
             } );
 
             return true;
