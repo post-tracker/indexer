@@ -1,0 +1,120 @@
+{
+  "quote": {
+    "id": "mre5tx25-9ifr93bf1wo",
+    "type": "quote",
+    "reply_id": "9020154",
+    "data": [
+      {
+        "id": 1,
+        "type": "text",
+        "data": {
+          "blocks": [
+            {
+              "key": "189ae",
+              "text": "Ctrl+C",
+              "type": "ordered-list-item",
+              "depth": 0,
+              "inlineStyleRanges": [],
+              "entityRanges": [],
+              "data": []
+            },
+            {
+              "key": "6f9c8",
+              "text": "Ctrl+V",
+              "type": "ordered-list-item",
+              "depth": 0,
+              "inlineStyleRanges": [],
+              "entityRanges": [],
+              "data": []
+            },
+            {
+              "key": "d8ttt",
+              "text": "Content",
+              "type": "ordered-list-item",
+              "depth": 0,
+              "inlineStyleRanges": [],
+              "entityRanges": [],
+              "data": []
+            }
+          ],
+          "entityMap": []
+        }
+      }
+    ],
+    "member": {
+      "id": "1847705",
+      "displayname": "SkaTac",
+      "nickname": "SkaTac",
+      "avatar": "https://robertsspaceindustries.com/media/2fedbm9hafzsar/heap_infobox/28990767748443de91959bthumbgifee8ef3a8f5471fde98c5b1a4a904c6f4.gif?v=1653659583",
+      "signature": "",
+      "meta": {
+        "badges": [
+          {
+            "name": "New Backer",
+            "icon": "https://robertsspaceindustries.com/media/30hwywogbj01nr/heap_thumb/New_backer.png"
+          },
+          {
+            "name": "NOVA Intergalactic",
+            "icon": "/media/ts7u1frt4vuddr/heap_note/NOVAEN-Thumbnail.png",
+            "url": "https://robertsspaceindustries.com/orgs/NOVAEN"
+          }
+        ]
+      },
+      "isGM": false,
+      "spoken_languages": [
+        "en"
+      ]
+    }
+  },
+  "video": {
+    "id": "mrdr8c6c-dn15q8f5kps",
+    "type": "video",
+    "data": {
+      "id": "embed:t9534rl0dcs7i",
+      "slug": "t9534rl0dcs7i",
+      "type": "embed",
+      "data": {
+        "embed_type": "video",
+        "url": "https://www.youtube.com/watch?v=3l-epO6oUHE",
+        "provider_name": "YouTube",
+        "title": "Star Citizen: 2016 Gamescom Alpha 3.0 Demo (High Quality)",
+        "description": "Here's the pure gameplay recording from our Star Citizen Alpha 3.0 Demo played LIVE during our Gamescom 2016 presentation.-----------------------------------...",
+        "image": "https://i.ytimg.com/vi/3l-epO6oUHE/maxresdefault.jpg",
+        "image_width": 1280,
+        "image_height": 720,
+        "embed_code": "<iframe src=\"https://www.youtube.com/embed/3l-epO6oUHE?start=690\" frameborder=\"0\" style=\"border:none;\"></iframe>",
+        "embed_width": 1280,
+        "embed_height": 720,
+        "provider_icon": "https://robertsspaceindustries.com/imager/v4LIcTfxCJVvGddAFSEaUqbz-fE=/https://www.youtube.com/favicon.ico",
+        "time_fetched": 1721829890,
+        "sizes": {
+          "mini": {
+            "url": "https://robertsspaceindustries.com/imager/YixZNOgN2KZ_cMThEVlDWo7DTck=/150x100/https://i.ytimg.com/vi/3l-epO6oUHE/maxresdefault.jpg",
+            "image_width": 150,
+            "image_height": 150
+          },
+          "square": {
+            "url": "https://robertsspaceindustries.com/imager/cAifONi0Y6Kot785QuWjzbySdVk=/250x250/https://i.ytimg.com/vi/3l-epO6oUHE/maxresdefault.jpg",
+            "image_width": 250,
+            "image_height": 250
+          },
+          "small": {
+            "url": "https://robertsspaceindustries.com/imager/8DXzE7iAPBE1GWAIC5bbVz6-ryw=/fit-in/400x224/https://i.ytimg.com/vi/3l-epO6oUHE/maxresdefault.jpg",
+            "image_width": 400,
+            "image_height": 126
+          },
+          "medium": {
+            "url": "https://robertsspaceindustries.com/imager/LarJ199xz_pcnnTK4oojrB3epmg=/fit-in/400x400/https://i.ytimg.com/vi/3l-epO6oUHE/maxresdefault.jpg",
+            "image_width": 400,
+            "image_height": 225
+          },
+          "large": {
+            "url": "https://robertsspaceindustries.com/imager/oVlwLSGiZ7do7yjdh3a1I9dcPks=/fit-in/1680x1050/https://i.ytimg.com/vi/3l-epO6oUHE/maxresdefault.jpg",
+            "image_width": 1680,
+            "image_height": 590
+          }
+        }
+      }
+    }
+  }
+}
