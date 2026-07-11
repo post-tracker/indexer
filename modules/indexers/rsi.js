@@ -2,6 +2,13 @@ const cheerio = require( 'cheerio' );
 
 const Post = require( '../Post.js' );
 
+function escapeHtml ( text ) {
+    return String( text )
+        .replace( /&/g, '&amp;' )
+        .replace( /</g, '&lt;' )
+        .replace( />/g, '&gt;' );
+}
+
 class RSI {
     constructor ( userId, indexerConfig, load ) {
         this.urlBase = 'https://robertsspaceindustries.com';
@@ -18,11 +25,33 @@ class RSI {
         postData.content_blocks.forEach( ( contentBlock ) => {
             let isOrderedList = false;
             let isUnorderedList = false;
+            let isCodeBlock = false;
 
             switch ( contentBlock.type ) {
                 case 'text':
                     contentBlock.data.blocks.forEach( ( block ) => {
                         let appendContent = block.text;
+
+                        // Code blocks are raw text: never parse their content as
+                        // markup and never apply inline styles to it. Group runs
+                        // of consecutive code-block lines into a single <pre>.
+                        if ( block.type === 'code-block' ) {
+                            if ( !isCodeBlock ) {
+                                post = `${ post }<pre>`;
+                                isCodeBlock = true;
+                            } else {
+                                post = `${ post }\n`;
+                            }
+
+                            post = `${ post }${ escapeHtml( block.text ) }`;
+
+                            return;
+                        }
+
+                        if ( isCodeBlock ) {
+                            post = `${ post }</pre>`;
+                            isCodeBlock = false;
+                        }
 
                         if ( block.inlineStyleRanges.length > 0 ) {
                             let startOffset = 0;
@@ -95,6 +124,13 @@ class RSI {
 
                         post = `${ post }${ appendContent }`;
                     } );
+
+                    // Close a code block that ran to the end of the block list
+                    if ( isCodeBlock ) {
+                        post = `${ post }</pre>`;
+                        isCodeBlock = false;
+                    }
+
                     break;
                 case 'image':
                     post = `${ post }<img src="${ contentBlock.data[ 0 ].data.url }">`;
