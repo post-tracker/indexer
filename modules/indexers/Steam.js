@@ -145,7 +145,7 @@ class Steam {
     // sources are game-wide, so attribution is a cross-account question: content
     // we can't match to ANY tracked account means there's a studio/dev account we
     // should be tracking (much like finder discovering new accounts).
-    static async afterIndex ( serviceConfig, serviceOptions, gameIdentifier, load ) {
+    static async afterIndex ( serviceConfig, serviceOptions, gameIdentifier, load, globalSteamIdentifiers ) {
         // The two endpoints key off different ids: announcements (/games/<id>/rss/)
         // use the community feed id, while discussions (/app/<id>/discussions/)
         // need the numeric app id. They coincide for games without a custom
@@ -159,12 +159,12 @@ class Steam {
         const appId = serviceOptions.appId || feedId;
         const cutoff = Math.floor( Date.now() / 1000 ) - ATTRIBUTION_WINDOW_SECONDS;
 
-        await Steam.checkUntrackedAnnouncers( serviceConfig, gameIdentifier, feedId, cutoff, load );
-        await Steam.checkUntrackedForumDevs( serviceConfig, gameIdentifier, appId, cutoff, load );
+        await Steam.checkUntrackedAnnouncers( serviceConfig, gameIdentifier, feedId, cutoff, load, globalSteamIdentifiers );
+        await Steam.checkUntrackedForumDevs( serviceConfig, gameIdentifier, appId, cutoff, load, globalSteamIdentifiers );
     }
 
     // Announcement authors (display names) with no matching tracked persona.
-    static async checkUntrackedAnnouncers ( serviceConfig, gameIdentifier, appId, cutoff, load ) {
+    static async checkUntrackedAnnouncers ( serviceConfig, gameIdentifier, appId, cutoff, load, globalSteamIdentifiers ) {
         const endpoint = `https://steamcommunity.com/games/${ appId }/rss/`;
 
         let items = false;
@@ -197,6 +197,18 @@ class Steam {
         }
 
         const trackedPersonas = new Set();
+
+        // Fold in the cross-game Steam exclusion set: an announcer already
+        // tracked as a Steam account for ANY game (identifiers are globally
+        // unique by identifier+service, so it can't be added here anyway) must
+        // not be re-flagged as untracked on this game's feed. Without this,
+        // e.g. path-of-exile's GGG announcers were re-notified for
+        // path-of-exile-2 on every run. Already lowercased upstream.
+        if ( Array.isArray( globalSteamIdentifiers ) ) {
+            for ( let i = 0; i < globalSteamIdentifiers.length; i = i + 1 ) {
+                trackedPersonas.add( globalSteamIdentifiers[ i ] );
+            }
+        }
 
         await Promise.all( serviceConfig.developers.map( async ( developer ) => {
             // Match the configured identifier itself, not just the resolved
@@ -247,7 +259,7 @@ class Steam {
     }
 
     // Forum dev posts (Steam's developer badge) whose SteamID64 isn't tracked.
-    static async checkUntrackedForumDevs ( serviceConfig, gameIdentifier, appId, cutoff, load ) {
+    static async checkUntrackedForumDevs ( serviceConfig, gameIdentifier, appId, cutoff, load, globalSteamIdentifiers ) {
         let devPosts = [];
 
         try {
@@ -276,6 +288,9 @@ class Steam {
         }
 
         const trackedSteamIds = new Set();
+        const globalSet = Array.isArray( globalSteamIdentifiers )
+            ? new Set( globalSteamIdentifiers )
+            : new Set();
 
         await Promise.all( serviceConfig.developers.map( async ( developer ) => {
             const steamId64 = await SteamFeed.resolveSteamId64( developer.identifier, load );
@@ -287,6 +302,16 @@ class Steam {
 
         for ( const [ steamId64, author ] of recentDevs ) {
             if ( trackedSteamIds.has( steamId64 ) ) {
+                continue;
+            }
+
+            // Cross-game exclusion: skip a forum dev already tracked as a Steam
+            // account anywhere. Accounts are commonly stored by the bare
+            // SteamID64 or the author display-name string, so match either
+            // against the global set (lowercased) before alerting — the same
+            // 409-would-block reasoning as the announcer path above.
+            if ( globalSet.has( String( steamId64 ).toLowerCase() )
+                || globalSet.has( String( author ).trim().toLowerCase() ) ) {
                 continue;
             }
 
