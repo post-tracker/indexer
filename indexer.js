@@ -12,7 +12,7 @@ const RUN_TIMEOUT = 60000;
 
 let counters = {};
 
-const indexService = function indexService ( serviceConfig, serviceOptions, gameIdentifier, globalSteamIdentifiers ) {
+const indexService = function indexService ( serviceConfig, serviceOptions, gameIdentifier ) {
     console.time( `${ gameIdentifier }-${ serviceConfig.indexerType }` );
 
     const indexerPromises = [];
@@ -84,9 +84,12 @@ const indexService = function indexService ( serviceConfig, serviceOptions, game
         .then( async () => {
             const IndexerClass = Indexers[ serviceConfig.indexerType ];
 
+            // Generic post-index hook. No indexer implements afterIndex today —
+            // Steam's untracked-dev DISCOVERY moved to the finder (see
+            // finder/modules/finders/Steam.js). Kept as an extension point.
             if ( IndexerClass && typeof IndexerClass.afterIndex === 'function' ) {
                 try {
-                    await IndexerClass.afterIndex( serviceConfig, serviceOptions, gameIdentifier, load, globalSteamIdentifiers );
+                    await IndexerClass.afterIndex( serviceConfig, serviceOptions, gameIdentifier, load );
                 } catch ( afterIndexError ) {
                     console.error( afterIndexError );
                 }
@@ -96,7 +99,7 @@ const indexService = function indexService ( serviceConfig, serviceOptions, game
         } );
 };
 
-const indexGame = function indexGame ( game, globalSteamIdentifiers ) {
+const indexGame = function indexGame ( game ) {
     const configuredServices = {};
     const {
         identifier,
@@ -174,7 +177,7 @@ const indexGame = function indexGame ( game, globalSteamIdentifiers ) {
                     continue;
                 }
 
-                servicesIndexers.push( pFinally( indexService( serviceConfig[ service ], configuredServices[ service ] || {}, identifier, globalSteamIdentifiers ) ) );
+                servicesIndexers.push( pFinally( indexService( serviceConfig[ service ], configuredServices[ service ] || {}, identifier ) ) );
             }
 
             return Promise.all( servicesIndexers );
@@ -200,33 +203,7 @@ const run = function run () {
     cache.clean();
 
     return api.get( '/games' )
-        .then( async ( gameData ) => {
-            // Cross-game Steam exclusion set. The untracked-announcer/forum-dev
-            // alerts in the Steam indexer's afterIndex only compare against the
-            // developers tracked for the CURRENT game, so an account tracked for
-            // another game (accounts are globally unique by identifier+service —
-            // adding it here would 409) gets re-flagged as "new" on this game's
-            // Steam feed every run. Path-of-Exile's GGG announcers (CommunityTeam_GGG,
-            // kiki, Natalia_GGG) tracked under path-of-exile were being re-notified
-            // for path-of-exile-2 forever. Fetch every Steam account once per run
-            // and fold it into the per-game exclusion so a dev tracked anywhere is
-            // never surfaced as untracked elsewhere. Degrades gracefully to []
-            // (per-game-only exclusion, prior behaviour) on a failed/odd response.
-            let globalSteamIdentifiers = [];
-
-            try {
-                const allAccounts = await api.get( '/accounts' );
-                const accountRows = ( allAccounts && Array.isArray( allAccounts.data ) )
-                    ? allAccounts.data
-                    : ( Array.isArray( allAccounts ) ? allAccounts : [] );
-
-                globalSteamIdentifiers = accountRows
-                    .filter( ( account ) => account.service === 'Steam' && account.identifier )
-                    .map( ( account ) => String( account.identifier ).trim().toLowerCase() );
-            } catch ( accountsError ) {
-                console.error( accountsError );
-            }
-
+        .then( ( gameData ) => {
             gameData.data.forEach( ( gameConfig ) => {
                 if ( gameConfig.config && gameConfig.config.sources ) {
                     // Disabled game (config.live falsy) — don't index its devs.
@@ -253,7 +230,7 @@ const run = function run () {
             } );
 
             indexerConfigs.forEach( ( currentGameData ) => {
-                gamePromises.push( pFinally( indexGame( currentGameData, globalSteamIdentifiers ) ) );
+                gamePromises.push( pFinally( indexGame( currentGameData ) ) );
             } );
 
             return Promise.all( gamePromises )
